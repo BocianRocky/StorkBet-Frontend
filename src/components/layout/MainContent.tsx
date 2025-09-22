@@ -1,6 +1,7 @@
 import { useSportContext } from "@/context/SportContext";
 import { OddsData } from "@/services/api";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import SimpleMatchCard from "@/components/match/SimpleMatchCard";
 
 // Przykładowe mecze dla strony głównej
 const sampleMatches: OddsData[] = [
@@ -136,7 +137,7 @@ export default function MainContent() {
             <h1 className="text-2xl font-bold text-neutral-100 mb-2">Najpopularniejsze mecze</h1>
             <p className="text-neutral-400">Wybierz sport z menu bocznego, aby zobaczyć więcej opcji</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl-grid-cols-3 gap-6 md:[&>*:nth-child(3n)]:xl:col-span-1">
             {sampleMatches.map((match) => (
               <SimpleMatchCard key={match.id} match={match} />
             ))}
@@ -174,64 +175,5 @@ export default function MainContent() {
         </div>
       </div>
     </ScrollArea>
-  );
-}
-
-function SimpleMatchCard({ match }: { match: OddsData }) {
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('pl-PL', {
-        day: '2-digit',
-        month: '2-digit',
-        year: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-  return (
-    <article className="rounded-2xl border border-neutral-600/40 bg-[linear-gradient(180deg,#0a0a0a,#15171c)] p-5 shadow-[0_8px_30px_rgba(189,189,189,0.08)] hover:shadow-[0_12px_40px_rgba(21,94,117,0.14)] transition">
-      <header className="mb-4">
-        <div className="flex items-center justify-between">
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-cyan-neutral-950 text-neutral-200 border border-neutral-200/40">
-            {match.league}
-          </span>
-          <span className="text-[11px] text-zinc-400">{formatDate(match.date)}</span>
-        </div>
-        <div className="mt-3 grid grid-cols-[1fr,auto,1fr] items-center gap-2 text-base font-bold text-zinc-100">
-          <span className="text-right truncate">{match.home}</span>
-          <span className="px-2 text-cyan-900">vs</span>
-          <span className="text-left truncate">{match.away}</span>
-        </div>
-      </header>
-      <div className={`grid gap-3 ${match.odds.draw ? 'grid-cols-3' : 'grid-cols-2'}`}>
-        <OddBtn label="1" value={match.odds.home} />
-        {match.odds.draw && <OddBtn label="X" value={match.odds.draw} />}
-        <OddBtn label="2" value={match.odds.away} />
-      </div>
-    </article>
-  );
-}
-
-function OddBtn({ label, value }: { label: string; value: number | undefined }) {
-  const displayValue = value !== undefined && value !== null ? value : 0;
-  const isDisabled = value === undefined || value === null;
-  
-  return (
-    <button 
-      disabled={isDisabled}
-      className={`w-full rounded-lg border text-zinc-100 text-sm font-semibold py-2.5 transition focus:outline-none focus:ring-2 focus:ring-cyan-500/30 ${
-        isDisabled 
-          ? 'bg-neutral-800 border-neutral-600 text-neutral-500 cursor-not-allowed' 
-          : 'bg-gradient-to-b from-[#0a1724] to-[#0f2236] hover:from-[#0e2234] hover:to-[#14314d] border-cyan-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]'
-      }`}
-    >
-      <span className="mr-1 text-cyan-700">{label}</span>
-      <span className="tracking-wide">{isDisabled ? 'N/A' : displayValue.toFixed(2)}</span>
-    </button>
   );
 }
