@@ -3,16 +3,20 @@ import './App.css'
 import Navbar from './components/layout/Navbar'
 import Home from './pages/Home'
 import Promotions from './pages/Promotions'
+import { SportProvider } from './context/SportContext'
+
 function App() {
   
   return (
-    <Router>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/promotions" element={<Promotions></Promotions>}/>
-      </Routes>
-  </Router>
+    <SportProvider>
+      <Router>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/promotions" element={<Promotions></Promotions>}/>
+        </Routes>
+      </Router>
+    </SportProvider>
   )
 }
 
