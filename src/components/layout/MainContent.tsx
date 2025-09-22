@@ -116,15 +116,15 @@ export default function MainContent() {
           {/* Sekcja promocji */}
           <div className="mb-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl p-4 text-white">
+              <div className="bg-gradient-to-r from-neutral-800 to-black rounded-xl p-4 text-white">
                 <h3 className="font-bold text-lg mb-2">🎁 Bonus powitalny</h3>
                 <p className="text-sm opacity-90">Otrzymaj 100% bonus do 500 zł na pierwszy depozyt</p>
               </div>
-              <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl p-4 text-white">
+              <div className="bg-gradient-to-r from-neutral-800 to-black rounded-xl p-4 text-white">
                 <h3 className="font-bold text-lg mb-2">⚡ Cashback</h3>
                 <p className="text-sm opacity-90">Do 10% zwrotu z każdego zakładu każdego dnia</p>
               </div>
-              <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-4 text-white">
+              <div className="bg-gradient-to-r from-neutral-800 to-black rounded-xl p-4 text-white">
                 <h3 className="font-bold text-lg mb-2">🏆 VIP Program</h3>
                 <p className="text-sm opacity-90">Ekskluzywne bonusy i osobisty menedżer konta</p>
               </div>

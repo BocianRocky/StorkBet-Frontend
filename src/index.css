@@ -80,3 +80,10 @@
     @apply bg-background text-foreground;
   }
 }
+@layer utilities {
+  .scrollbar-dark {
+    scrollbar-width: thin;
+    scrollbar-color: #171718 #0a0a0a; 
+  }
+  
+}
