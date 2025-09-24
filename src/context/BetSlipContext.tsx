@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 
 export type BetSelection = {
-	id: string; // unique: matchId-selection
+	id: string;
 	matchId: string;
 	selection: "1" | "X" | "2";
 	price: number;

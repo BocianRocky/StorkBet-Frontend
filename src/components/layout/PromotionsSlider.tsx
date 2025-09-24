@@ -1,6 +1,6 @@
 import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination, EffectCoverflow } from 'swiper/modules'; // ⬅️ dodaj EffectCoverflow
+import { Autoplay, Pagination, EffectCoverflow } from 'swiper/modules';
 import { Promotion } from '@/types/promotion';
 import 'swiper/swiper-bundle.css';
 
@@ -63,7 +63,7 @@ const PromotionsSlider: React.FC = () => {
           centeredSlides
           spaceBetween={20}
           autoplay={{
-            delay: 3000,
+            delay: 3500,
             disableOnInteraction: false,
           }}
           pagination={{

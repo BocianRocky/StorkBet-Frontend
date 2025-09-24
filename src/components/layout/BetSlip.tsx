@@ -41,9 +41,22 @@ const BetSlip = () => {
                       <div className="min-w-0">
                         <div className="text-xs text-neutral-400">{sel.league} • {new Date(sel.date).toLocaleDateString('pl-PL')}</div>
                         <div className="font-semibold text-neutral-100 truncate">{sel.home} vs {sel.away}</div>
-                        <div className="text-sm text-cyan-300 mt-1">Typ: {sel.selection} @ {sel.price.toFixed(2)}</div>
                       </div>
                       <Button variant="ghost" size="sm" onClick={() => removeSelection(sel.id)} className="text-neutral-400 hover:text-white">Usuń</Button>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between">
+                      <div>
+                        <span className="text-sm text-gray-400">TYP:</span> <span className="text-cyan-800 font-bold">{sel.selection === "1"
+                                ? sel.home 
+                                : sel.selection === "2" 
+                                  ? sel.away 
+                                  : sel.selection === "X" 
+                                    ? "Remis" 
+                                    : sel.selection}
+                        </span>
+                      </div>
+
+                      <span className="ml-2 text-cyan-600 font-bold border border-cyan-700 px-2 py-1 rounded bg-neutral-950">{sel.price.toFixed(2)}</span>
                     </div>
                   </div>
                 ))}
