@@ -2,6 +2,7 @@ import { useSportContext } from "@/context/SportContext";
 import { OddsData } from "@/services/api";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import SimpleMatchCard from "@/components/match/SimpleMatchCard";
+import PromotionsSlider from "./PromotionsSlider";
 
 // Przykładowe mecze dla strony głównej
 const sampleMatches: OddsData[] = [
@@ -110,30 +111,12 @@ export default function MainContent() {
   }
 
   if (!selectedSport) {
-    // Strona główna - wyświetl przykładowe mecze
+    // Strona główna
     return (
       <ScrollArea className="h-full w-full">
-        <div className="min-h-full p-4">
-          {/* Sekcja promocji */}
-          <div className="mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-gradient-to-r from-neutral-800 to-black rounded-xl p-4 text-white">
-                <h3 className="font-bold text-lg mb-2">🎁 Bonus powitalny</h3>
-                <p className="text-sm opacity-90">Otrzymaj 100% bonus do 500 zł na pierwszy depozyt</p>
-              </div>
-              <div className="bg-gradient-to-r from-neutral-800 to-black rounded-xl p-4 text-white">
-                <h3 className="font-bold text-lg mb-2">⚡ Cashback</h3>
-                <p className="text-sm opacity-90">Do 10% zwrotu z każdego zakładu każdego dnia</p>
-              </div>
-              <div className="bg-gradient-to-r from-neutral-800 to-black rounded-xl p-4 text-white">
-                <h3 className="font-bold text-lg mb-2">🏆 VIP Program</h3>
-                <p className="text-sm opacity-90">Ekskluzywne bonusy i osobisty menedżer konta</p>
-              </div>
-            </div>
-          </div>
 
-          {/* Sekcja meczów */}
-          <div className="mb-6">
+        <PromotionsSlider/>
+        <div className="mb-6 mt-12">
             <h1 className="text-2xl font-bold text-neutral-100 mb-2">Najpopularniejsze mecze</h1>
             <p className="text-neutral-400">Wybierz sport z menu bocznego, aby zobaczyć więcej opcji</p>
           </div>
@@ -142,7 +125,7 @@ export default function MainContent() {
               <SimpleMatchCard key={match.id} match={match} />
             ))}
           </div>
-        </div>
+        
       </ScrollArea>
     );
   }
