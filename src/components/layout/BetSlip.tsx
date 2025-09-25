@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { useMemo, useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area"
+// Removed custom ScrollArea to match SideBar's native scroll behavior
 import { useBetSlip } from "@/context/BetSlipContext"
 
 const BetSlip = () => {
@@ -16,7 +16,7 @@ const BetSlip = () => {
     }, [amount, combinedOdds, selections.length]);
 
     return (
-      <div className="overflow-y-auto h-full w-full p-4">
+      <div className="h-full w-full p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold my-4">Kupon</h1>
           {selections.length > 0 && (
@@ -30,7 +30,7 @@ const BetSlip = () => {
             <TabsTrigger value="system" className="font-bold">SYSTEM</TabsTrigger>
           </TabsList>
           <TabsContent value="single" className="h-full">
-            <ScrollArea className="h-[500px] w-full">
+            <div className="h-[500px] w-full overflow-y-auto">
               <div className="flex flex-col m-3 gap-2">
                 {selections.length === 0 && (
                   <div className="text-neutral-400 text-sm">Brak wybranych zdarzeń. Kliknij kurs, aby dodać do kuponu.</div>
@@ -61,7 +61,7 @@ const BetSlip = () => {
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           </TabsContent>
         </Tabs>
 

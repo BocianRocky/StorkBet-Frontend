@@ -5,21 +5,29 @@ import Home from './pages/Home'
 import Promotions from './pages/Promotions'
 import { SportProvider } from './context/SportContext'
 import { BetSlipProvider } from './context/BetSlipContext'
+import { AuthProvider } from './context/AuthContext'
+import Login from './pages/Login'
+import Register from './pages/Register'
 
 function App() {
   
   return (
-    <SportProvider>
-      <BetSlipProvider>
-        <Router>
-          <Navbar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/promotions" element={<Promotions></Promotions>}/>
-          </Routes>
-        </Router>
-      </BetSlipProvider>
-    </SportProvider>
+    <AuthProvider>
+      <SportProvider>
+        <BetSlipProvider>
+          <Router>
+            <Navbar />
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              {/* Public routes */}
+              <Route path="/" element={<Home />} />
+              <Route path="/promotions" element={<Promotions />} />
+            </Routes>
+          </Router>
+        </BetSlipProvider>
+      </SportProvider>
+    </AuthProvider>
   )
 }
 

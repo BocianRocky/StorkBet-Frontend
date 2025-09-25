@@ -1,5 +1,9 @@
 import { Button } from '@/components/ui/button'
 import {Link} from 'react-router-dom'
+// removed sheet-based login/register; using routes instead
+import logo from "../../assets/logo.png";
+import { useAuth } from '../../context/AuthContext'
+import { useEffect, useState } from 'react'
 import {
     Sheet,
     SheetClose,
@@ -10,8 +14,51 @@ import {
     SheetTitle,
     SheetTrigger,
   } from "@/components/ui/sheet"
-import logo from "../../assets/logo.png";
+import { getMe, type PlayerMeResponse } from '../../services/player'
 const Navbar = () => {
+    const { isAuthenticated, logout, login } = useAuth();
+    const [me, setMe] = useState<PlayerMeResponse | null>(null);
+    const [loadingMe, setLoadingMe] = useState(false);
+    const [loginOpen, setLoginOpen] = useState(false);
+    const [loginEmail, setLoginEmail] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
+    const [loginLoading, setLoginLoading] = useState(false);
+    const [loginError, setLoginError] = useState<string | null>(null);
+
+    useEffect(() => {
+        let active = true;
+        async function load() {
+            if (!isAuthenticated) { setMe(null); return; }
+            setLoadingMe(true);
+            try {
+                const data = await getMe();
+                if (active) setMe(data);
+            } catch {
+                if (active) setMe(null);
+            } finally {
+                if (active) setLoadingMe(false);
+            }
+        }
+        load();
+        return () => { active = false; };
+    }, [isAuthenticated]);
+
+    async function handleLoginSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        setLoginError(null);
+        setLoginLoading(true);
+        try {
+            await login({ email: loginEmail, password: loginPassword });
+            setLoginOpen(false);
+            setLoginEmail('');
+            setLoginPassword('');
+        } catch (err: any) {
+            setLoginError(err?.message || 'Błąd logowania');
+        } finally {
+            setLoginLoading(false);
+        }
+    }
+
     return (
         <nav className="h-16 w-full bg-zinc-900 flex items-center justify-between px-4 shadow-[0px_10px_20px_rgba(0,0,0,0.8)] z-50 relative">
             <div className="flex-1 min-w-0">
@@ -26,26 +73,55 @@ const Navbar = () => {
             </div>
 
         <div className="flex-1 flex justify-end space-x-4 min-w-0">
-        <Sheet>
-            <SheetTrigger asChild>
-                <Button variant="secondary" className="text-sm text-black font-bold bg-cyan-600 hover:bg-cyan-500">Zaloguj się</Button>
-                </SheetTrigger>
-                <SheetContent side="left">
-                    <SheetHeader>
-                        <SheetTitle>Zaloguj się</SheetTitle>
-                        <SheetClose/>
-                    </SheetHeader>
-                    <SheetDescription>
-                        <input type="text" placeholder="Login" className="w-full h-10 px-2 my-2 border rounded-md"/>
-                        <input type="password" placeholder="Hasło" className="w-full h-10 px-2 my-2 border rounded-md"/>
-                    </SheetDescription>
-                    <SheetFooter>
-                        <Button variant="secondary" className="text-sm text-white font-bold bg-zinc-700 hover:bg-zinc-600">Zaloguj się</Button>
-                    </SheetFooter>
-                </SheetContent>
-        </Sheet>
-            <Button variant="secondary" className="text-sm text-white font-bold bg-zinc-700 hover:bg-zinc-600">Zarejestruj się</Button>
-        
+            {isAuthenticated ? (
+                <div className="flex items-center space-x-3">
+                    <div className="text-sm text-white font-semibold">
+                        {loadingMe ? '...' : me ? `${me.name} ${me.lastName} | Saldo: ${me.accountBalance.toFixed(2)} zł` : ''}
+                    </div>
+                    <Button variant="secondary" className="text-sm text-white font-bold bg-zinc-700 hover:bg-zinc-600" onClick={logout}>Wyloguj</Button>
+                </div>
+            ) : (
+                <>
+                <Sheet open={loginOpen} onOpenChange={setLoginOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="secondary" className="text-sm text-black font-bold bg-cyan-600 hover:bg-cyan-500">Zaloguj się</Button>
+                    </SheetTrigger>
+                    <SheetContent side="left">
+                        <SheetHeader>
+                            <SheetTitle>Zaloguj się</SheetTitle>
+                            <SheetClose/>
+                        </SheetHeader>
+                        <form onSubmit={handleLoginSubmit} className="mt-4">
+                            <SheetDescription>
+                                {loginError && <div className="text-red-500 text-sm mb-2">{loginError}</div>}
+                                <input
+                                    type="email"
+                                    placeholder="Email"
+                                    className="w-full h-10 px-2 my-2 border rounded-md"
+                                    value={loginEmail}
+                                    onChange={(e) => setLoginEmail(e.target.value)}
+                                    required
+                                />
+                                <input
+                                    type="password"
+                                    placeholder="Hasło"
+                                    className="w-full h-10 px-2 my-2 border rounded-md"
+                                    value={loginPassword}
+                                    onChange={(e) => setLoginPassword(e.target.value)}
+                                    required
+                                />
+                            </SheetDescription>
+                            <SheetFooter>
+                                <Button type="submit" disabled={loginLoading} variant="secondary" className="text-sm text-white font-bold bg-zinc-700 hover:bg-zinc-600">
+                                    {loginLoading ? 'Logowanie...' : 'Zaloguj się'}
+                                </Button>
+                            </SheetFooter>
+                        </form>
+                    </SheetContent>
+                </Sheet>
+                <Link to="/register"><Button variant="secondary" className="text-sm text-white font-bold bg-zinc-700 hover:bg-zinc-600">Zarejestruj się</Button></Link>
+                </>
+            )}
         </div>
         </nav>
     );
