@@ -14,6 +14,19 @@ import {
     SheetTitle,
     SheetTrigger,
   } from "@/components/ui/sheet"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { getMe, type PlayerMeResponse } from '../../services/player'
 const Navbar = () => {
     const { isAuthenticated, logout, login } = useAuth();
@@ -75,10 +88,33 @@ const Navbar = () => {
         <div className="flex-1 flex justify-end space-x-4 min-w-0">
             {isAuthenticated ? (
                 <div className="flex items-center space-x-3">
+                    
+                    
+                    <Button variant="secondary" className="text-sm text-white font-bold bg-zinc-700 hover:bg-zinc-600" onClick={logout}>Wyloguj</Button>
                     <div className="text-sm text-white font-semibold">
+                        
                         {loadingMe ? '...' : me ? `${me.name} ${me.lastName} | Saldo: ${me.accountBalance.toFixed(2)} zł` : ''}
                     </div>
-                    <Button variant="secondary" className="text-sm text-white font-bold bg-zinc-700 hover:bg-zinc-600" onClick={logout}>Wyloguj</Button>
+                    
+
+
+                                    <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button className="outline-none">
+                            <Avatar className="cursor-pointer">
+                                <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                                <AvatarFallback>CN</AvatarFallback>
+                            </Avatar>
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56">
+                        <DropdownMenuLabel>Moje konto</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>Profil</DropdownMenuItem>
+                        <DropdownMenuItem>Ustawienia</DropdownMenuItem>
+                        <DropdownMenuItem>Wyloguj się</DropdownMenuItem>
+                    </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             ) : (
                 <>

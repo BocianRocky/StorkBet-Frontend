@@ -16,6 +16,11 @@ const sampleMatches: OddsData[] = [
       home: 2.10,
       draw: 3.40,
       away: 3.20
+    },
+    oddIds: {
+      home: 201,
+      draw: 202,
+      away: 203
     }
   },
   {
@@ -28,6 +33,11 @@ const sampleMatches: OddsData[] = [
       home: 1.95,
       draw: 3.60,
       away: 3.80
+    },
+    oddIds: {
+      home: 201,
+      draw: 202,
+      away: 203
     }
   },
   {
@@ -40,6 +50,11 @@ const sampleMatches: OddsData[] = [
       home: 1.75,
       draw: 3.80,
       away: 4.50
+    },
+    oddIds: {
+      home: 201,
+      draw: 202,
+      away: 203
     }
   },
   {
@@ -52,6 +67,11 @@ const sampleMatches: OddsData[] = [
       home: 1.60,
       draw: 4.20,
       away: 5.50
+    },
+    oddIds: {
+      home: 201,
+      draw: 202,
+      away: 203
     }
   },
   {
@@ -64,6 +84,11 @@ const sampleMatches: OddsData[] = [
       home: 2.30,
       draw: 3.20,
       away: 3.10
+    },
+    oddIds: {
+      home: 201,
+      draw: 202,
+      away: 203
     }
   },
   {
@@ -76,6 +101,11 @@ const sampleMatches: OddsData[] = [
       home: 2.00,
       draw: 3.50,
       away: 3.60
+    },
+    oddIds: {
+      home: 201,
+      draw: 202,
+      away: 203
     }
   }
 ];
