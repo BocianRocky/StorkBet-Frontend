@@ -5,12 +5,13 @@ export interface ApiEventData {
   odds: Array<{
     teamName: string;
     oddsValue: number;
+    oddId: number;
   }>;
 }
 
 // Przekształcona struktura dla komponentów
 export interface OddsData {
-  id: string;
+  id: string; // eventId as string (numeric)
   home: string;
   away: string;
   league: string;
@@ -19,6 +20,11 @@ export interface OddsData {
     home: number | undefined;
     draw?: number | undefined;
     away: number | undefined;
+  };
+  oddIds: {
+    home?: number;
+    draw?: number;
+    away?: number;
   };
 }
 
@@ -60,16 +66,17 @@ class ApiService {
       // Przekształcenie danych z API do formatu komponentów
       return data.map((event: ApiEventData) => {
         // Znajdź zespoły i kursy
-        const homeOdds = event.odds.find(odd => odd.teamName !== 'Draw');
         const drawOdds = event.odds.find(odd => odd.teamName === 'Draw');
-        const awayOdds = event.odds.filter(odd => odd.teamName !== 'Draw');
+        const nonDraw = event.odds.filter(odd => odd.teamName !== 'Draw');
+        const homeOdds = nonDraw[0];
+        const awayOdds = nonDraw[1] ?? nonDraw[0];
         
         // Jeśli są więcej niż 2 zespoły (nie licząc Draw), weź pierwsze dwa
         const homeTeam = homeOdds?.teamName || 'Unknown Team';
-        const awayTeam = awayOdds.length > 1 ? awayOdds[1]?.teamName : awayOdds[0]?.teamName || 'Unknown Team';
+        const awayTeam = awayOdds?.teamName || 'Unknown Team';
         
         return {
-          id: `event-${event.eventId}`,
+          id: String(event.eventId),
           home: homeTeam,
           away: awayTeam,
           league: `${sportKey.replace('_', ' ').toUpperCase()}`, // Użyj sportKey jako ligi
@@ -77,8 +84,13 @@ class ApiService {
           odds: {
             home: homeOdds?.oddsValue,
             draw: drawOdds?.oddsValue,
-            away: awayOdds.length > 1 ? awayOdds[1]?.oddsValue : awayOdds[0]?.oddsValue,
-          }
+            away: nonDraw.length > 1 ? nonDraw[1]?.oddsValue : nonDraw[0]?.oddsValue,
+          },
+          oddIds: {
+            home: homeOdds?.oddId,
+            draw: drawOdds?.oddId,
+            away: nonDraw.length > 1 ? nonDraw[1]?.oddId : nonDraw[0]?.oddId,
+          },
         };
       });
     } catch (error) {

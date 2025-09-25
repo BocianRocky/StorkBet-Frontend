@@ -29,7 +29,7 @@ const Register: React.FC = () => {
 
   return (
     <div className="flex items-center justify-center p-6">
-      <form onSubmit={onSubmit} className="w-full max-w-sm space-y-4">
+      <form onSubmit={onSubmit} className="w-full max-w-sm space-y-8">
         <h1 className="text-2xl font-semibold">Rejestracja</h1>
         {error && <div className="text-red-600 text-sm">{error}</div>}
         <div className="space-y-1">

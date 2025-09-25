@@ -4,11 +4,15 @@ import { Input } from "@/components/ui/input"
 import { useMemo, useState } from "react";
 // Removed custom ScrollArea to match SideBar's native scroll behavior
 import { useBetSlip } from "@/context/BetSlipContext"
+import { takeBetslip } from "@/services/player"
 
 const BetSlip = () => {
 
     const [amount, setAmount] = useState<number>(0);
     const { selections, removeSelection, clearSelections, combinedOdds } = useBetSlip();
+    const [submitting, setSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
+    const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
     const potentialWin = useMemo(() => {
         if (!amount || selections.length === 0) return 0;
@@ -23,6 +27,8 @@ const BetSlip = () => {
             <Button variant="ghost" size="sm" onClick={clearSelections} className="text-neutral-300">Wyczyść</Button>
           )}
         </div>
+        {submitError && <div className="text-sm text-red-500 mb-2">{submitError}</div>}
+        {submitSuccess && <div className="text-sm text-green-500 mb-2">{submitSuccess}</div>}
         <Tabs defaultValue="single" className="flex-grow w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="single" className="font-bold">Pojedynczy</TabsTrigger>
@@ -93,8 +99,38 @@ const BetSlip = () => {
           <span className="text-lg font-semibold">{potentialWin > 0 ? potentialWin.toFixed(2) : "-"} zł</span>
         </div>
 
-        <Button className="w-full h-12 mt-4 font-bold bg-slate-700 hover:bg-zinc-600 text-white" disabled={selections.length === 0 || amount <= 0}>
-          Zatwierdź kupon
+        <Button
+          className="w-full h-12 mt-4 font-bold bg-slate-700 hover:bg-zinc-600 text-white disabled:opacity-60"
+          disabled={selections.length === 0 || amount <= 0 || submitting}
+          onClick={async () => {
+            setSubmitError(null);
+            setSubmitSuccess(null);
+            try {
+              console.log(selections);
+              setSubmitting(true);
+              // matchId ma format typu "event-123" – wyciągamy część numeryczną
+              const oddsIds = selections
+                .map(s => {
+                  // id ma format "odd-<oddId>"
+                  const onlyNums = String(s.id).replace(/[^0-9]/g, "");
+                  const n = Number(onlyNums);
+                  return Number.isFinite(n) ? n : NaN;
+                })
+                .filter(n => !Number.isNaN(n));
+              if (oddsIds.length === 0) {
+                throw new Error('Brak prawidłowych identyfikatorów kursów do wysłania.');
+              }
+              await takeBetslip(amount, oddsIds);
+              setSubmitSuccess('Kupon został złożony.');
+              clearSelections();
+            } catch (e: any) {
+              setSubmitError(e?.message || 'Nie udało się złożyć kuponu.');
+            } finally {
+              setSubmitting(false);
+            }
+          }}
+        >
+          {submitting ? 'Wysyłanie...' : 'Zatwierdź kupon'}
         </Button>
       </div>
     );

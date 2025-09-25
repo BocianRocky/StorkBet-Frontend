@@ -20,4 +20,15 @@ export async function getMe(): Promise<PlayerMeResponse> {
   return res.json();
 }
 
-
+export async function takeBetslip(amount: number, oddsIds: number[]): Promise<void> {
+  const res = await fetchWithAuth(`${BASE_URL}/betslips`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount, oddsIds }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return;
+}

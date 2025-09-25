@@ -24,7 +24,17 @@ export default function SimpleMatchCard({ match }: SimpleMatchCardProps) {
 		}
 	};
 
-	const selectionId = (choice: "1" | "X" | "2") => `${match.id}-${choice}`;
+	const getOddId = (choice: "1" | "X" | "2") => {
+		if (!match || !('oddIds' in match)) return undefined as unknown as number | undefined;
+		const ids = (match as any).oddIds as { home?: number; draw?: number; away?: number } | undefined;
+		if (!ids) return undefined;
+		return choice === '1' ? ids.home : choice === '2' ? ids.away : ids.draw;
+	};
+
+	const selectionId = (choice: "1" | "X" | "2") => {
+		const oddId = getOddId(choice);
+		return oddId != null ? `odd-${oddId}` : `${match.id}-${choice}`;
+	};
 
 	return (
 		<article className="rounded-2xl border border-neutral-600/40 bg-[linear-gradient(180deg,#0a0a0a,#15171c)] p-5 shadow-[0_8px_30px_rgba(189,189,189,0.08)] hover:shadow-[0_12px_40px_rgba(21,94,117,0.14)] transition">
@@ -45,49 +55,61 @@ export default function SimpleMatchCard({ match }: SimpleMatchCardProps) {
 				<OddBtn
 					label="1"
 					value={match.odds.home}
-					active={isSelected(selectionId("1"))}
-					onClick={() => addOrToggleSelection({
-						id: selectionId("1"),
-						matchId: match.id,
-						selection: "1",
-						price: match.odds.home ?? 0,
-						home: match.home,
-						away: match.away,
-						league: match.league,
-						date: match.date,
-					})}
+					active={(() => { const id = selectionId("1"); return id.startsWith('odd-') ? isSelected(id) : false; })()}
+					onClick={() => {
+                        const id = selectionId("1");
+						if (!id.startsWith('odd-')) return;
+                        addOrToggleSelection({
+                            id,
+                            matchId: match.id,
+                            selection: "1",
+                            price: match.odds.home ?? 0,
+                            home: match.home,
+                            away: match.away,
+                            league: match.league,
+                            date: match.date,
+                        })
+                    }}
 				/>
 				{match.odds.draw && (
 					<OddBtn
 						label="X"
 						value={match.odds.draw}
-						active={isSelected(selectionId("X"))}
-						onClick={() => addOrToggleSelection({
-							id: selectionId("X"),
-							matchId: match.id,
-							selection: "X",
-							price: match.odds.draw ?? 0,
-							home: match.home,
-							away: match.away,
-							league: match.league,
-							date: match.date,
-						})}
+					active={(() => { const id = selectionId("X"); return id.startsWith('odd-') ? isSelected(id) : false; })()}
+					onClick={() => {
+                        const id = selectionId("X");
+						if (!id.startsWith('odd-')) return;
+                        addOrToggleSelection({
+                            id,
+                            matchId: match.id,
+                            selection: "X",
+                            price: match.odds.draw ?? 0,
+                            home: match.home,
+                            away: match.away,
+                            league: match.league,
+                            date: match.date,
+                        })
+                    }}
 					/>
 				)}
 				<OddBtn
 					label="2"
 					value={match.odds.away}
-					active={isSelected(selectionId("2"))}
-					onClick={() => addOrToggleSelection({
-						id: selectionId("2"),
-						matchId: match.id,
-						selection: "2",
-						price: match.odds.away ?? 0,
-						home: match.home,
-						away: match.away,
-						league: match.league,
-						date: match.date,
-					})}
+					active={(() => { const id = selectionId("2"); return id.startsWith('odd-') ? isSelected(id) : false; })()}
+					onClick={() => {
+                        const id = selectionId("2");
+						if (!id.startsWith('odd-')) return;
+                        addOrToggleSelection({
+                            id,
+                            matchId: match.id,
+                            selection: "2",
+                            price: match.odds.away ?? 0,
+                            home: match.home,
+                            away: match.away,
+                            league: match.league,
+                            date: match.date,
+                        })
+                    }}
 				/>
 			</div>
 		</article>

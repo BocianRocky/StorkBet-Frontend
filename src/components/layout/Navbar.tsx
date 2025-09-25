@@ -84,7 +84,7 @@ const Navbar = () => {
                 <>
                 <Sheet open={loginOpen} onOpenChange={setLoginOpen}>
                     <SheetTrigger asChild>
-                        <Button variant="secondary" className="text-sm text-black font-bold bg-cyan-600 hover:bg-cyan-500">Zaloguj się</Button>
+                        <Button variant="secondary" className="text-sm text-black font-bold bg-cyan-800 hover:bg-cyan-700">Zaloguj się</Button>
                     </SheetTrigger>
                     <SheetContent side="left">
                         <SheetHeader>
@@ -97,7 +97,7 @@ const Navbar = () => {
                                 <input
                                     type="email"
                                     placeholder="Email"
-                                    className="w-full h-10 px-2 my-2 border rounded-md"
+                                    className="w-full h-10 px-2 my-2 border rounded-md text-black"
                                     value={loginEmail}
                                     onChange={(e) => setLoginEmail(e.target.value)}
                                     required
@@ -105,7 +105,7 @@ const Navbar = () => {
                                 <input
                                     type="password"
                                     placeholder="Hasło"
-                                    className="w-full h-10 px-2 my-2 border rounded-md"
+                                    className="w-full h-10 px-2 my-2 border rounded-md text-black"
                                     value={loginPassword}
                                     onChange={(e) => setLoginPassword(e.target.value)}
                                     required
