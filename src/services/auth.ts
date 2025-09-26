@@ -19,6 +19,9 @@ export interface AuthResponse {
   lastName: string;
   email: string;
   accountBalance: number;
+  // Some backends may return role as `role` or `roleId`; both optional for flexibility
+  role?: number; // 1 = admin, 2 = player
+  roleId?: number; // preferred numeric field name if available
 }
 
 const BASE_URL = '/api/auth';

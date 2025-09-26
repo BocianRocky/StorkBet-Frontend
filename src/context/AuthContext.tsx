@@ -9,6 +9,7 @@ export interface AuthUser {
   lastName: string;
   email: string;
   accountBalance: number;
+  roleId?: number; // 1 = admin, 2 = player
 }
 
 interface AuthState {
@@ -56,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       lastName: auth.lastName,
       email: auth.email,
       accountBalance: auth.accountBalance,
+      roleId: auth.roleId ?? auth.role,
     };
     localStorage.setItem('auth_user', JSON.stringify(nextUser));
     setState({

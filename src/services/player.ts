@@ -32,3 +32,25 @@ export async function takeBetslip(amount: number, oddsIds: number[]): Promise<vo
   }
   return;
 }
+
+export interface PlayerBetslipSummary {
+  id: number;
+  amount: number;
+  date: string; // ISO string from backend
+  wynik: string | null; // result
+  totalOdds: number;
+  potentialWin: number;
+  oddsCount: number;
+}
+
+export async function getMyBetslips(): Promise<PlayerBetslipSummary[]> {
+  const res = await fetchWithAuth(`${BASE_URL}/betslips`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return res.json();
+}

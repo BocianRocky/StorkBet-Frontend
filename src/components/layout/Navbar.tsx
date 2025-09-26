@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import {Link} from 'react-router-dom'
+import {Link, useNavigate} from 'react-router-dom'
 // removed sheet-based login/register; using routes instead
 import logo from "../../assets/logo.png";
 import { useAuth } from '../../context/AuthContext'
@@ -37,6 +37,8 @@ const Navbar = () => {
     const [loginPassword, setLoginPassword] = useState('');
     const [loginLoading, setLoginLoading] = useState(false);
     const [loginError, setLoginError] = useState<string | null>(null);
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         let active = true;
@@ -104,9 +106,10 @@ const Navbar = () => {
                         <DropdownMenuContent className="w-56">
                             <DropdownMenuLabel>Moje konto</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>Profil</DropdownMenuItem>
-                            <DropdownMenuItem>Ustawienia</DropdownMenuItem>
-                            <DropdownMenuItem onClick={logout}>Wyloguj się</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => navigate('/profile')} className='cursor-pointer'>Profil</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => navigate('/my-bets')} className='cursor-pointer'>Moje zakłady</DropdownMenuItem>
+                            <DropdownMenuItem className='cursor-pointer'>Ustawienia</DropdownMenuItem>
+                            <DropdownMenuItem onClick={logout} className='cursor-pointer'>Wyloguj się</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
