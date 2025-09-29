@@ -10,6 +10,7 @@ import { AuthProvider } from './context/AuthContext'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import MyBets from "./pages/MyBets";
+import MyBetDetails from "./pages/MyBetDetails";
 import Profile from "./pages/Profile";
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
               <Route path="/promotions" element={<Promotions />} />
               <Route element={<ProtectedRoute requiredRoleId={2} />}>
                 <Route path="/my-bets" element={<MyBets />} />
+                <Route path="/my-bets/:id" element={<MyBetDetails />} />
                 <Route path="/profile" element={<Profile />} />
               </Route>
               <Route path="*" element={<div>404 Not Found</div>} />

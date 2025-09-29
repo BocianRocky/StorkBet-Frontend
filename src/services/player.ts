@@ -54,3 +54,40 @@ export async function getMyBetslips(): Promise<PlayerBetslipSummary[]> {
   }
   return res.json();
 }
+
+export interface PlayerBetslipDetailsOddsItem {
+  id: number;
+  constOdd: number;
+  wynik: string | null;
+  event: {
+    id: number;
+    name: string;
+    date: string;
+  };
+  team: {
+    id: number;
+    name: string;
+  };
+}
+
+export interface PlayerBetslipDetails {
+  id: number;
+  amount: number;
+  date: string;
+  wynik: string | null;
+  totalOdds: number;
+  potentialWin: number;
+  betSlipOdds: PlayerBetslipDetailsOddsItem[];
+}
+
+export async function getBetslipById(id: number): Promise<PlayerBetslipDetails> {
+  const res = await fetchWithAuth(`${BASE_URL}/betslips/${id}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return res.json();
+}

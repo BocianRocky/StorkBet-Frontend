@@ -1,0 +1,125 @@
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { getBetslipById, type PlayerBetslipDetails } from '../services/player';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Separator } from '../components/ui/separator';
+
+const MyBetDetails: React.FC = () => {
+  const { id } = useParams();
+  const [details, setDetails] = useState<PlayerBetslipDetails | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    let mounted = true;
+    setLoading(true);
+    getBetslipById(Number(id))
+      .then((data) => {
+        if (!mounted) return;
+        setDetails(data);
+        setError(null);
+      })
+      .catch((e: unknown) => {
+        if (!mounted) return;
+        setError(e instanceof Error ? e.message : 'Wystąpił błąd podczas pobierania');
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
+  if (loading) return <div className="p-4">Ładowanie…</div>;
+  if (error) return <div className="p-4 text-red-600">{error}</div>;
+  if (!details) return <div className="p-4">Nie znaleziono kuponu.</div>;
+
+  const created = new Date(details.date);
+  const createdText = `${created.toLocaleDateString()} ${created.toLocaleTimeString()}`;
+
+  return (
+    <div className="p-4 max-w-4xl mx-auto w-full mt-6">
+      <h1 className="text-4xl font-semibold mb-8">Szczegóły kuponu #{details.id}</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Stawka</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-medium">{details.amount.toFixed(2)} zł</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Potencjalna wygrana</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-medium">{details.potentialWin.toFixed(2)} zł</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Kurs łączny</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-medium">{details.totalOdds}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-medium">{details.wynik ?? 'w trakcie'}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Zdarzenia</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {details.betSlipOdds.map((o) => {
+              const d = new Date(o.event.date);
+              const dt = `${d.toLocaleDateString()} ${d.toLocaleTimeString()}`;
+              return (
+                <div key={o.id} className="grid grid-cols-1 md:grid-cols-6 gap-2 text-sm">
+                  <div className="md:col-span-3">
+                    <div className="text-gray-500">Wydarzenie</div>
+                    <div className="font-medium">{o.event.name}</div>
+                  </div>
+                  <div className="md:col-span-1">
+                    <div className="text-gray-500">Drużyna</div>
+                    <div className="font-medium">{o.team.name}</div>
+                  </div>
+                  <div className="md:col-span-1">
+                    <div className="text-gray-500">Kurs</div>
+                    <div className="font-medium">{o.constOdd}</div>
+                  </div>
+                  <div className="md:col-span-1">
+                    <div className="text-gray-500">Data</div>
+                    <div className="font-medium">{dt}</div>
+                  </div>
+                  <div className="md:col-span-6">
+                    <Separator className="my-2" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="text-xs text-gray-500 mt-4">Data utworzenia: {createdText}</div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default MyBetDetails;
+
+

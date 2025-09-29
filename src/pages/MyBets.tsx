@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getMyBetslips, type PlayerBetslipSummary } from '../services/player';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Separator } from '../components/ui/separator';
 
 const MyBets: React.FC = () => {
+  const navigate = useNavigate();
   const [bets, setBets] = useState<PlayerBetslipSummary[] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +54,7 @@ const MyBets: React.FC = () => {
           const date = new Date(bet.date);
           const formatted = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
           return (
-            <Card key={bet.id} className='cursor-pointer '>
+            <Card key={bet.id} className='cursor-pointer ' onClick={() => navigate(`/my-bets/${bet.id}`)}>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between w-full">
                   <span>Kupon #{bet.id}</span>
