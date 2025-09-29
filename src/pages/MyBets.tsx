@@ -44,34 +44,15 @@ const MyBets: React.FC = () => {
   }
 
   return (
-    <div className="p-4 max-w-4xl mx-auto w-full">
-      <h1 className="text-xl font-semibold mb-4">Moje kupony</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Łączna stawka</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-medium">{totalStake.toFixed(2)} zł</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Potencjalne wygrane (suma)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-medium">{totalPotentialWin.toFixed(2)} zł</div>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="p-4 max-w-4xl mx-auto w-full mt-6">
+      <h1 className="text-4xl font-semibold mb-8">Moje kupony</h1>
 
       <div className="space-y-3">
         {bets.map((bet) => {
           const date = new Date(bet.date);
           const formatted = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
           return (
-            <Card key={bet.id}>
+            <Card key={bet.id} className='cursor-pointer '>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between w-full">
                   <span>Kupon #{bet.id}</span>
