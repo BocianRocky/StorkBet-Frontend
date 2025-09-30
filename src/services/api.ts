@@ -99,6 +99,27 @@ class ApiService {
     }
   }
 
+  async fetchPromotionsToday(): Promise<import('../types/promotion').PromotionToday[]> {
+    try {
+      const response = await fetch(`${this.baseUrl}/Promotions/today`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('Błąd podczas pobierania promocji (today):', error);
+      throw error;
+    }
+  }
+
   async fetchGroupedSports(): Promise<GroupedSports[]> {
     try {
       const response = await fetch(`${this.baseUrl}/Sports/grouped`);
