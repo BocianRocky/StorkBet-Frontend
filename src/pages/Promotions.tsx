@@ -58,9 +58,10 @@ const Promotions = () => {
 
 	return (
 		<div className="w-full max-w-7xl mx-auto px-4">
-			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-center">
+			<h1 className="text-4xl font-semibold mb-8 mt-6">Promocje</h1>
+			<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 justify-items-center">
 				{promotions.map((p) => {
-					const imgSrc = `/${p.image}`; // images live in public/
+					const imgSrc = `/${p.image}`;
 					return (
 						<Card key={p.id} className="overflow-hidden bg-neutral-950 border-neutral-800">
 							<div className="aspect-[16/9] w-full overflow-hidden">

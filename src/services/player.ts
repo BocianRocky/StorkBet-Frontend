@@ -20,6 +20,25 @@ export async function getMe(): Promise<PlayerMeResponse> {
   return res.json();
 }
 
+export interface PlayerProfileResponse {
+  name: string;
+  lastName: string;
+  email: string;
+  accountBalance: number;
+}
+
+export async function getProfile(): Promise<PlayerProfileResponse> {
+  const res = await fetchWithAuth(`${BASE_URL}/profile`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function takeBetslip(amount: number, oddsIds: number[]): Promise<void> {
   const res = await fetchWithAuth(`${BASE_URL}/betslips`, {
     method: 'POST',
