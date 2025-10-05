@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMyBetslips, type PlayerBetslipSummary } from '../services/player';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -32,8 +32,6 @@ const MyBets: React.FC = () => {
     };
   }, []);
 
-  const totalStake = useMemo(() => (bets ? bets.reduce((sum, b) => sum + b.amount, 0) : 0), [bets]);
-  const totalPotentialWin = useMemo(() => (bets ? bets.reduce((sum, b) => sum + b.potentialWin, 0) : 0), [bets]);
 
   if (loading) {
     return <div className="p-4">Ładowanie…</div>;
@@ -45,6 +43,28 @@ const MyBets: React.FC = () => {
     return <div className="p-4">Brak kuponów.</div>;
   }
 
+  const mapWynikLabel = (value: unknown): { text: string; className: string } => {
+    if (value === null || value === undefined) return { text: 'w trakcie', className: 'text-gray-600' };
+    if (typeof value === 'boolean') {
+      return value
+        ? { text: 'Wygrana', className: 'text-green-600 font-semibold' }
+        : { text: 'Przegrana', className: 'text-red-600 font-semibold' };
+    }
+    if (typeof value === 'number') {
+      if (value === 1) return { text: 'Wygrana', className: 'text-green-600 font-semibold' };
+      if (value === 0) return { text: 'Przegrana', className: 'text-red-600 font-semibold' };
+      return { text: String(value), className: 'text-gray-800' };
+    }
+    const normalized = String(value).trim().toLowerCase();
+    if (normalized === '1' || normalized === 'win' || normalized === 'wygrana' || normalized === 'true') {
+      return { text: 'Wygrana', className: 'text-green-600 font-semibold' };
+    }
+    if (normalized === '0' || normalized === 'loss' || normalized === 'przegrana' || normalized === 'false') {
+      return { text: 'Przegrana', className: 'text-red-600 font-semibold' };
+    }
+    return { text: String(value), className: 'text-gray-800' };
+  };
+
   return (
     <div className="p-4 max-w-4xl mx-auto w-full mt-6">
       <h1 className="text-4xl font-semibold mb-8">Moje kupony</h1>
@@ -53,6 +73,7 @@ const MyBets: React.FC = () => {
         {bets.map((bet) => {
           const date = new Date(bet.date);
           const formatted = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+          const wynik = mapWynikLabel(bet.wynik);
           return (
             <Card key={bet.id} className='cursor-pointer ' onClick={() => navigate(`/my-bets/${bet.id}`)}>
               <CardHeader>
@@ -81,7 +102,7 @@ const MyBets: React.FC = () => {
                   </div>
                   <div className="col-span-2 md:col-span-2">
                     <div className="text-gray-500">Wynik</div>
-                    <div className="font-medium">{bet.wynik ?? 'w trakcie'}</div>
+                    <div className={`font-medium ${wynik.className}`}>{wynik.text}</div>
                   </div>
                 </div>
                 <Separator className="my-3" />

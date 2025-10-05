@@ -56,7 +56,7 @@ export interface PlayerBetslipSummary {
   id: number;
   amount: number;
   date: string; // ISO string from backend
-  wynik: string | null; // result
+  wynik: number | string | boolean | null; // result can be numeric/string/boolean/null
   totalOdds: number;
   potentialWin: number;
   oddsCount: number;
@@ -77,11 +77,13 @@ export async function getMyBetslips(): Promise<PlayerBetslipSummary[]> {
 export interface PlayerBetslipDetailsOddsItem {
   id: number;
   constOdd: number;
-  wynik: string | null;
+  wynik: number | string | boolean | null;
   event: {
     id: number;
     name: string;
     date: string;
+    group?: string;
+    title?: string;
   };
   team: {
     id: number;
@@ -93,7 +95,7 @@ export interface PlayerBetslipDetails {
   id: number;
   amount: number;
   date: string;
-  wynik: string | null;
+  wynik: number | string | boolean | null;
   totalOdds: number;
   potentialWin: number;
   betSlipOdds: PlayerBetslipDetailsOddsItem[];

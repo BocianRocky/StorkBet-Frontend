@@ -40,6 +40,28 @@ const MyBetDetails: React.FC = () => {
   const created = new Date(details.date);
   const createdText = `${created.toLocaleDateString()} ${created.toLocaleTimeString()}`;
 
+  const mapWynikLabel = (value: unknown): { text: string; className: string } => {
+    if (value === null || value === undefined) return { text: 'w trakcie', className: 'text-gray-600' };
+    if (typeof value === 'boolean') {
+      return value
+        ? { text: 'Wygrana', className: 'text-green-600 font-semibold' }
+        : { text: 'Przegrana', className: 'text-red-600 font-semibold' };
+    }
+    if (typeof value === 'number') {
+      if (value === 1) return { text: 'Wygrana', className: 'text-green-600 font-semibold' };
+      if (value === 0) return { text: 'Przegrana', className: 'text-red-600 font-semibold' };
+      return { text: String(value), className: 'text-gray-800' };
+    }
+    const normalized = String(value).trim().toLowerCase();
+    if (normalized === '1' || normalized === 'win' || normalized === 'wygrana' || normalized === 'true') {
+      return { text: 'Wygrana', className: 'text-green-600 font-semibold' };
+    }
+    if (normalized === '0' || normalized === 'loss' || normalized === 'przegrana' || normalized === 'false') {
+      return { text: 'Przegrana', className: 'text-red-600 font-semibold' };
+    }
+    return { text: String(value), className: 'text-gray-800' };
+  };
+
   return (
     <div className="p-4 max-w-4xl mx-auto w-full mt-6">
       <h1 className="text-4xl font-semibold mb-8">Szczegóły kuponu #{details.id}</h1>
@@ -74,7 +96,7 @@ const MyBetDetails: React.FC = () => {
             <CardTitle>Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-medium">{details.wynik ?? 'w trakcie'}</div>
+            {(() => { const l = mapWynikLabel(details.wynik); return (<div className={`text-lg font-medium ${l.className}`}>{l.text}</div>); })()}
           </CardContent>
         </Card>
       </div>
@@ -88,11 +110,20 @@ const MyBetDetails: React.FC = () => {
             {details.betSlipOdds.map((o) => {
               const d = new Date(o.event.date);
               const dt = `${d.toLocaleDateString()} ${d.toLocaleTimeString()}`;
+              const wynik = mapWynikLabel(o.wynik);
               return (
                 <div key={o.id} className="grid grid-cols-1 md:grid-cols-6 gap-2 text-sm">
                   <div className="md:col-span-3">
                     <div className="text-gray-500">Wydarzenie</div>
                     <div className="font-medium">{o.event.name}</div>
+                  </div>
+                  <div className="md:col-span-1">
+                    <div className="text-gray-500">Grupa</div>
+                    <div className="font-medium">{o.event.group ?? '-'}</div>
+                  </div>
+                  <div className="md:col-span-1">
+                    <div className="text-gray-500">Liga</div>
+                    <div className="font-medium">{o.event.title ?? '-'}</div>
                   </div>
                   <div className="md:col-span-1">
                     <div className="text-gray-500">Drużyna</div>
@@ -105,6 +136,10 @@ const MyBetDetails: React.FC = () => {
                   <div className="md:col-span-1">
                     <div className="text-gray-500">Data</div>
                     <div className="font-medium">{dt}</div>
+                  </div>
+                  <div className="md:col-span-6">
+                    <div className="text-gray-500">Wynik zdarzenia</div>
+                    <div className={`font-medium ${wynik.className}`}>{wynik.text}</div>
                   </div>
                   <div className="md:col-span-6">
                     <Separator className="my-2" />
