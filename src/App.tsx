@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import './App.css'
 import Navbar from './components/layout/Navbar'
+import Footer from './components/layout/Footer'
 import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Promotions from './pages/Promotions'
@@ -12,6 +13,8 @@ import Register from './pages/Register'
 import MyBets from "./pages/MyBets";
 import MyBetDetails from "./pages/MyBetDetails";
 import Profile from "./pages/Profile";
+import Legal from "./pages/Legal";
+import Contact from "./pages/Contact";
 
 function App() {
   
@@ -32,8 +35,11 @@ function App() {
                 <Route path="/my-bets/:id" element={<MyBetDetails />} />
                 <Route path="/profile" element={<Profile />} />
               </Route>
+              <Route path="/legal" element={<Legal />} />
+              <Route path="/contact" element={<Contact />} />
               <Route path="*" element={<div>404 Not Found</div>} />
             </Routes>
+            <Footer />
           </Router>
         </BetSlipProvider>
       </SportProvider>
