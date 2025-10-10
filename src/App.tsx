@@ -15,6 +15,7 @@ import MyBetDetails from "./pages/MyBetDetails";
 import Profile from "./pages/Profile";
 import Legal from "./pages/Legal";
 import Contact from "./pages/Contact";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   
@@ -34,6 +35,9 @@ function App() {
                 <Route path="/my-bets" element={<MyBets />} />
                 <Route path="/my-bets/:id" element={<MyBetDetails />} />
                 <Route path="/profile" element={<Profile />} />
+              </Route>
+              <Route element={<ProtectedRoute requiredRoleId={1} />}>
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
               </Route>
               <Route path="/legal" element={<Legal />} />
               <Route path="/contact" element={<Contact />} />

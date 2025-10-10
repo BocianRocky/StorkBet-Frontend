@@ -25,6 +25,7 @@ interface AuthContextValue {
   login: (payload: LoginRequest) => Promise<void>;
   register: (payload: RegisterRequest) => Promise<void>;
   logout: () => void;
+  getRedirectPath: () => string;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -45,19 +46,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { user: null, accessToken: null, refreshToken: null, refreshTokenExp: null };
   });
 
+  // Helper function to parse role from JWT token
+  const parseRoleFromToken = useCallback((token: string): number => {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const role = payload.role;
+      if (role === 'Admin') return 1;
+      if (role === 'Player') return 2;
+      return 2; // default to player role
+    } catch (error) {
+      console.error('Error parsing JWT token:', error);
+      return 2; // default to player role
+    }
+  }, []);
+
   const persistAll = useCallback((auth: AuthResponse) => {
     persistAuth({
       accessToken: auth.accessToken,
       refreshToken: auth.refreshToken,
       refreshTokenExp: auth.refreshTokenExp,
     });
+    
+    // Parse role from JWT token if not provided in response
+    const roleId = auth.roleId ?? auth.role ?? parseRoleFromToken(auth.accessToken);
+    
     const nextUser: AuthUser = {
       userId: auth.userId,
       name: auth.name,
       lastName: auth.lastName,
       email: auth.email,
       accountBalance: auth.accountBalance,
-      roleId: auth.roleId ?? auth.role,
+      roleId,
     };
     localStorage.setItem('auth_user', JSON.stringify(nextUser));
     setState({
@@ -66,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       refreshToken: auth.refreshToken,
       refreshTokenExp: auth.refreshTokenExp,
     });
-  }, []);
+  }, [parseRoleFromToken]);
 
   const login = useCallback(async (payload: LoginRequest) => {
     const res = await apiLogin(payload);
@@ -86,6 +105,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('auth_user');
     setState({ user: null, accessToken: null, refreshToken: null, refreshTokenExp: null });
   }, []);
+
+  const getRedirectPath = useCallback(() => {
+    if (!state.user) return '/';
+    return state.user.roleId === 1 ? '/admin/dashboard' : '/';
+  }, [state.user]);
 
   useEffect(() => {
     // Optional: sync between tabs
@@ -112,7 +136,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     register,
     logout,
-  }), [state.user, state.accessToken, login, register, logout]);
+    getRedirectPath,
+  }), [state.user, state.accessToken, login, register, logout, getRedirectPath]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

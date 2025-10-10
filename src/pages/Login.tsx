@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
-  const { login } = useAuth();
+  const { login, getRedirectPath } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,7 +16,8 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       await login({ email, password });
-      navigate('/');
+      const redirectPath = getRedirectPath();
+      navigate(redirectPath);
     } catch (err: any) {
       setError(err?.message || 'Błąd logowania');
     } finally {
