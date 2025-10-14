@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import Legal from "./pages/Legal";
 import Contact from "./pages/Contact";
 import AdminDashboard from "./pages/AdminDashboard";
+import { Toaster } from "./components/ui/toaster";
 
 function App() {
   
@@ -44,6 +45,7 @@ function App() {
               <Route path="*" element={<div>404 Not Found</div>} />
             </Routes>
             <Footer />
+            <Toaster />
           </Router>
         </BetSlipProvider>
       </SportProvider>

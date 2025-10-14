@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 // Removed custom ScrollArea to match SideBar's native scroll behavior
 import { useBetSlip } from "@/context/BetSlipContext"
 import { takeBetslip } from "@/services/player"
+import { BetSuccessDialog } from "@/components/BetSuccessDialog"
+import { useToast } from "@/hooks/use-toast"
 
 const BetSlip = () => {
 
@@ -13,6 +15,13 @@ const BetSlip = () => {
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+    const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+    const [successData, setSuccessData] = useState<{
+        amount: number;
+        potentialWin: number;
+        combinedOdds: number;
+    } | null>(null);
+    const { toast } = useToast();
 
     const potentialWin = useMemo(() => {
         if (!amount || selections.length === 0) return 0;
@@ -121,7 +130,24 @@ const BetSlip = () => {
                 throw new Error('Brak prawidłowych identyfikatorów kursów do wysłania.');
               }
               await takeBetslip(amount, oddsIds);
-              setSubmitSuccess('Kupon został złożony.');
+              
+              // Save success data before clearing selections
+              setSuccessData({
+                amount,
+                potentialWin,
+                combinedOdds
+              });
+              
+              // Show success dialog
+              setShowSuccessDialog(true);
+              
+              // Show toast notification
+              toast({
+                variant: "success",
+                title: "Kupon złożony!",
+                description: `Twój kupon na ${amount.toFixed(2)} zł został pomyślnie złożony.`,
+              });
+              
               clearSelections();
             } catch (e: any) {
               setSubmitError(e?.message || 'Nie udało się złożyć kuponu.');
@@ -132,6 +158,19 @@ const BetSlip = () => {
         >
           {submitting ? 'Wysyłanie...' : 'Zatwierdź kupon'}
         </Button>
+
+        <BetSuccessDialog
+          open={showSuccessDialog}
+          onOpenChange={(open) => {
+            setShowSuccessDialog(open);
+            if (!open) {
+              setSuccessData(null);
+            }
+          }}
+          amount={successData?.amount || 0}
+          potentialWin={successData?.potentialWin || 0}
+          combinedOdds={successData?.combinedOdds || 0}
+        />
       </div>
     );
 }
