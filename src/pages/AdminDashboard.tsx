@@ -1,8 +1,48 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
+import { apiService, type AdminWinLossRatio, type AdminBookmakerProfit } from '../services/api';
 
 const AdminDashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const [stats, setStats] = React.useState<AdminWinLossRatio | null>(null);
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [profit, setProfit] = React.useState<AdminBookmakerProfit | null>(null);
+  const [profitLoading, setProfitLoading] = React.useState<boolean>(false);
+  const [profitError, setProfitError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await apiService.fetchAdminWinLossRatio();
+        if (mounted) setStats(data);
+      } catch (e: any) {
+        if (mounted) setError(e?.message || 'Nie udało się pobrać statystyk');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    load();
+    async function loadProfit() {
+      setProfitLoading(true);
+      setProfitError(null);
+      try {
+        const res = await apiService.fetchAdminBookmakerProfit();
+        if (mounted) setProfit(res);
+      } catch (e: any) {
+        if (mounted) setProfitError(e?.message || 'Nie udało się pobrać zysku bukmachera');
+      } finally {
+        if (mounted) setProfitLoading(false);
+      }
+    }
+    loadProfit();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
@@ -50,6 +90,58 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
           
+          <div className="mt-8 p-6 bg-white border rounded-lg">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Win/Loss Ratio</h3>
+            {loading && (
+              <p className="text-gray-600">Ładowanie...</p>
+            )}
+            {error && (
+              <p className="text-red-600">{error}</p>
+            )}
+            {!loading && !error && stats && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-gray-50 p-4 rounded">
+                  <p className="text-sm text-gray-600">Łącznie zakładów</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalBets}</p>
+                </div>
+                <div className="bg-green-50 p-4 rounded">
+                  <p className="text-sm text-green-700">Wygrane</p>
+                  <p className="text-2xl font-bold text-green-900">{stats.wonBets} <span className="text-base font-medium">({stats.winRatePercent.toFixed(2)}%)</span></p>
+                </div>
+                <div className="bg-red-50 p-4 rounded">
+                  <p className="text-sm text-red-700">Przegrane</p>
+                  <p className="text-2xl font-bold text-red-900">{stats.lostBets} <span className="text-base font-medium">({stats.lossRatePercent.toFixed(2)}%)</span></p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-8 p-6 bg-white border rounded-lg">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Zysk bukmachera</h3>
+            {profitLoading && (
+              <p className="text-gray-600">Ładowanie...</p>
+            )}
+            {profitError && (
+              <p className="text-red-600">{profitError}</p>
+            )}
+            {!profitLoading && !profitError && profit && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-gray-50 p-4 rounded">
+                  <p className="text-sm text-gray-600">Suma stawek</p>
+                  <p className="text-2xl font-bold text-gray-900">{profit.totalStake.toFixed(2)}</p>
+                </div>
+                <div className="bg-blue-50 p-4 rounded">
+                  <p className="text-sm text-blue-700">Suma wygranych</p>
+                  <p className="text-2xl font-bold text-blue-900">{profit.totalWinnings.toFixed(2)}</p>
+                </div>
+                <div className="bg-amber-50 p-4 rounded">
+                  <p className="text-sm text-amber-700">Zysk bukmachera</p>
+                  <p className="text-2xl font-bold text-amber-900">{profit.bookmakerProfit.toFixed(2)}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="mt-8 p-4 bg-gray-50 rounded-lg">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Informacje o administratorze</h3>
             <p className="text-gray-700">

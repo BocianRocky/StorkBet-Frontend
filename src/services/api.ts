@@ -45,6 +45,22 @@ export interface GroupedSports {
   sports: GroupedSportItem[];
 }
 
+import { fetchWithAuth } from './fetchWithAuth';
+
+export interface AdminWinLossRatio {
+  totalBets: number;
+  wonBets: number;
+  lostBets: number;
+  winRatePercent: number;
+  lossRatePercent: number;
+}
+
+export interface AdminBookmakerProfit {
+  totalStake: number;
+  totalWinnings: number;
+  bookmakerProfit: number;
+}
+
 class ApiService {
   private baseUrl = '/api';
 
@@ -132,6 +148,48 @@ class ApiService {
       return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Błąd podczas pobierania sportów (grouped):', error);
+      throw error;
+    }
+  }
+
+  async fetchAdminWinLossRatio(): Promise<AdminWinLossRatio> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Admin/win-loss-ratio`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data as AdminWinLossRatio;
+    } catch (error) {
+      console.error('Błąd podczas pobierania statystyk wygranych/przegranych (admin):', error);
+      throw error;
+    }
+  }
+
+  async fetchAdminBookmakerProfit(): Promise<AdminBookmakerProfit> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Admin/bookmaker-profit`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data as AdminBookmakerProfit;
+    } catch (error) {
+      console.error('Błąd podczas pobierania zysku bukmachera (admin):', error);
       throw error;
     }
   }
