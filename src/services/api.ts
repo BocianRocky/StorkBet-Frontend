@@ -81,6 +81,14 @@ export interface AdminMonthlyCouponsItem {
   totalYearCount: number;
 }
 
+export interface AdminPlayerProfitItem {
+  playerId: number;
+  name: string;
+  lastName: string;
+  accountBalance: number;
+  profit: number;
+}
+
 class ApiService {
   private baseUrl = '/api';
 
@@ -273,6 +281,27 @@ class ApiService {
       return Array.isArray(data) ? (data as AdminMonthlyCouponsItem[]) : [];
     } catch (error) {
       console.error('Błąd podczas pobierania kuponów miesięcznych (admin):', error);
+      throw error;
+    }
+  }
+
+  async fetchAdminPlayersProfit(): Promise<AdminPlayerProfitItem[]> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Admin/players-profit`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return Array.isArray(data) ? (data as AdminPlayerProfitItem[]) : [];
+    } catch (error) {
+      console.error('Błąd podczas pobierania zysku graczy (admin):', error);
       throw error;
     }
   }

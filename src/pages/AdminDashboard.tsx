@@ -1,11 +1,12 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { apiService, type AdminWinLossRatio, type AdminBookmakerProfit, type AdminSportCouponsItem, type AdminSportEffectivenessItem, type AdminMonthlyCouponsItem } from '../services/api';
+import { apiService, type AdminWinLossRatio, type AdminBookmakerProfit, type AdminSportCouponsItem, type AdminSportEffectivenessItem, type AdminMonthlyCouponsItem, type AdminPlayerProfitItem } from '../services/api';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Bar,
   BarChart,
@@ -31,6 +32,10 @@ const AdminDashboard: React.FC = () => {
   const [monthlyCoupons, setMonthlyCoupons] = React.useState<AdminMonthlyCouponsItem[] | null>(null);
   const [monthlyCouponsLoading, setMonthlyCouponsLoading] = React.useState<boolean>(false);
   const [monthlyCouponsError, setMonthlyCouponsError] = React.useState<string | null>(null);
+  const [playersProfit, setPlayersProfit] = React.useState<AdminPlayerProfitItem[] | null>(null);
+  const [playersProfitLoading, setPlayersProfitLoading] = React.useState<boolean>(false);
+  const [playersProfitError, setPlayersProfitError] = React.useState<string | null>(null);
+  const [playersFilter, setPlayersFilter] = React.useState<string>("\n");
 
   React.useEffect(() => {
     let mounted = true;
@@ -99,17 +104,28 @@ const AdminDashboard: React.FC = () => {
       }
     }
     loadMonthlyCoupons();
+    async function loadPlayersProfit() {
+      setPlayersProfitLoading(true);
+      setPlayersProfitError(null);
+      try {
+        const res = await apiService.fetchAdminPlayersProfit();
+        if (mounted) setPlayersProfit(res);
+      } catch (e: any) {
+        if (mounted) setPlayersProfitError(e?.message || 'Nie udało się pobrać zysków graczy');
+      } finally {
+        if (mounted) setPlayersProfitLoading(false);
+      }
+    }
+    loadPlayersProfit();
     return () => {
       mounted = false;
     };
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white shadow rounded-lg p-6">
+    <div className="p-4 max-w-7xl mx-auto w-full mt-6">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+        <h1 className="text-4xl font-semibold">Panel administracyjny</h1>
             <button
               onClick={logout}
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors"
@@ -118,40 +134,12 @@ const AdminDashboard: React.FC = () => {
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-blue-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-blue-900 mb-2">Użytkownicy</h3>
-              <p className="text-blue-700">Zarządzaj użytkownikami systemu</p>
-            </div>
-            
-            <div className="bg-green-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-green-900 mb-2">Zakłady</h3>
-              <p className="text-green-700">Przeglądaj i zarządzaj zakładami</p>
-            </div>
-            
-            <div className="bg-purple-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-purple-900 mb-2">Promocje</h3>
-              <p className="text-purple-700">Dodawaj i edytuj promocje</p>
-            </div>
-            
-            <div className="bg-yellow-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-yellow-900 mb-2">Raporty</h3>
-              <p className="text-yellow-700">Generuj raporty finansowe</p>
-            </div>
-            
-            <div className="bg-red-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-red-900 mb-2">Ustawienia</h3>
-              <p className="text-red-700">Konfiguracja systemu</p>
-            </div>
-            
-            <div className="bg-indigo-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-indigo-900 mb-2">Wsparcie</h3>
-              <p className="text-indigo-700">Zarządzaj zgłoszeniami</p>
-            </div>
-          </div>
-          
-          <div className="mt-8 p-6 bg-white border rounded-lg">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Win/Loss Ratio</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Win/Loss Ratio</CardTitle>
+          </CardHeader>
+          <CardContent>
             {loading && (
               <p className="text-gray-600">Ładowanie...</p>
             )}
@@ -160,24 +148,28 @@ const AdminDashboard: React.FC = () => {
             )}
             {!loading && !error && stats && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-gray-50 p-4 rounded">
-                  <p className="text-sm text-gray-600">Łącznie zakładów</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalBets}</p>
+                <div className="rounded-lg border border-cyan-900/40 bg-gradient-to-b from-[#0a1724] to-[#0f2236] p-4 text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                  <p className="text-sm text-cyan-700">Łącznie zakładów</p>
+                  <p className="text-2xl font-bold">{stats.totalBets}</p>
                 </div>
-                <div className="bg-green-50 p-4 rounded">
-                  <p className="text-sm text-green-700">Wygrane</p>
-                  <p className="text-2xl font-bold text-green-900">{stats.wonBets} <span className="text-base font-medium">({stats.winRatePercent.toFixed(2)}%)</span></p>
+                <div className="rounded-lg border border-cyan-600 bg-cyan-700/30 p-4 text-cyan-100">
+                  <p className="text-sm text-cyan-300">Wygrane</p>
+                  <p className="text-2xl font-bold text-cyan-50">{stats.wonBets} <span className="text-base font-medium text-cyan-300">({stats.winRatePercent.toFixed(2)}%)</span></p>
                 </div>
-                <div className="bg-red-50 p-4 rounded">
-                  <p className="text-sm text-red-700">Przegrane</p>
-                  <p className="text-2xl font-bold text-red-900">{stats.lostBets} <span className="text-base font-medium">({stats.lossRatePercent.toFixed(2)}%)</span></p>
+                <div className="rounded-lg border border-cyan-900/40 bg-gradient-to-b from-[#0a1724] to-[#0f2236] p-4 text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                  <p className="text-sm text-cyan-700">Przegrane</p>
+                  <p className="text-2xl font-bold">{stats.lostBets} <span className="text-base font-medium text-cyan-700">({stats.lossRatePercent.toFixed(2)}%)</span></p>
                 </div>
               </div>
             )}
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="mt-8 p-6 bg-white border rounded-lg">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Zysk bukmachera</h3>
+        <Card>
+          <CardHeader>
+            <CardTitle>Zysk bukmachera</CardTitle>
+          </CardHeader>
+          <CardContent>
             {profitLoading && (
               <p className="text-gray-600">Ładowanie...</p>
             )}
@@ -186,24 +178,28 @@ const AdminDashboard: React.FC = () => {
             )}
             {!profitLoading && !profitError && profit && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-gray-50 p-4 rounded">
-                  <p className="text-sm text-gray-600">Suma stawek</p>
-                  <p className="text-2xl font-bold text-gray-900">{profit.totalStake.toFixed(2)}</p>
+                <div className="rounded-lg border border-cyan-900/40 bg-gradient-to-b from-[#0a1724] to-[#0f2236] p-4 text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                  <p className="text-sm text-cyan-700">Suma stawek</p>
+                  <p className="text-2xl font-bold">{profit.totalStake.toFixed(2)}</p>
                 </div>
-                <div className="bg-blue-50 p-4 rounded">
-                  <p className="text-sm text-blue-700">Suma wygranych</p>
-                  <p className="text-2xl font-bold text-blue-900">{profit.totalWinnings.toFixed(2)}</p>
+                <div className="rounded-lg border border-cyan-600 bg-cyan-700/30 p-4 text-cyan-100">
+                  <p className="text-sm text-cyan-300">Suma wygranych</p>
+                  <p className="text-2xl font-bold text-cyan-50">{profit.totalWinnings.toFixed(2)}</p>
                 </div>
-                <div className="bg-amber-50 p-4 rounded">
-                  <p className="text-sm text-amber-700">Zysk bukmachera</p>
-                  <p className="text-2xl font-bold text-amber-900">{profit.bookmakerProfit.toFixed(2)}</p>
+                <div className="rounded-lg border border-cyan-900/40 bg-gradient-to-b from-[#0a1724] to-[#0f2236] p-4 text-zinc-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                  <p className="text-sm text-cyan-700">Zysk bukmachera</p>
+                  <p className="text-2xl font-bold">{profit.bookmakerProfit.toFixed(2)}</p>
                 </div>
               </div>
             )}
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="mt-8 p-6 bg-white border rounded-lg">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Kupony per sport</h3>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Kupony per sport</CardTitle>
+          </CardHeader>
+          <CardContent>
             {sportCouponsLoading && (
               <p className="text-gray-600">Ładowanie...</p>
             )}
@@ -236,10 +232,14 @@ const AdminDashboard: React.FC = () => {
             {!sportCouponsLoading && !sportCouponsError && sportCoupons && sportCoupons.length === 0 && (
               <p className="text-gray-600">Brak danych.</p>
             )}
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="mt-8 p-6 bg-white border rounded-lg">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Skuteczność per sport</h3>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Skuteczność per sport</CardTitle>
+          </CardHeader>
+          <CardContent>
             {sportEffectivenessLoading && (
               <p className="text-gray-600">Ładowanie...</p>
             )}
@@ -279,10 +279,14 @@ const AdminDashboard: React.FC = () => {
             {!sportEffectivenessLoading && !sportEffectivenessError && sportEffectiveness && sportEffectiveness.length === 0 && (
               <p className="text-gray-600">Brak danych.</p>
             )}
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="mt-8 p-6 bg-white border rounded-lg">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Kupony miesięcznie (bieżący rok)</h3>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Kupony miesięcznie (bieżący rok)</CardTitle>
+          </CardHeader>
+          <CardContent>
             {monthlyCouponsLoading && (
               <p className="text-gray-600">Ładowanie...</p>
             )}
@@ -315,21 +319,85 @@ const AdminDashboard: React.FC = () => {
             {!monthlyCouponsLoading && !monthlyCouponsError && monthlyCoupons && monthlyCoupons.length === 0 && (
               <p className="text-gray-600">Brak danych.</p>
             )}
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Informacje o administratorze</h3>
-            <p className="text-gray-700">
-              Zalogowany jako: <span className="font-semibold">{user?.name} {user?.lastName}</span>
-            </p>
-            <p className="text-gray-700">
-              Email: <span className="font-semibold">{user?.email}</span>
-            </p>
-            <p className="text-gray-700">
-              ID użytkownika: <span className="font-semibold">{user?.userId}</span>
-            </p>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Zysk graczy</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="sm:col-span-1">
+                <label className="block text-sm text-gray-600 mb-1">Filtr (imię lub nazwisko)</label>
+                <input
+                  type="text"
+                  value={playersFilter}
+                  onChange={(e) => setPlayersFilter(e.target.value)}
+                  placeholder="np. Jan lub Kowalski"
+                  className="w-full rounded-md border border-cyan-900/40 bg-[#0a1724] text-zinc-100 placeholder:text-cyan-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
+                />
+              </div>
+            </div>
+
+            {playersProfitLoading && <p className="text-gray-600">Ładowanie...</p>}
+            {playersProfitError && <p className="text-red-600">{playersProfitError}</p>}
+            {!playersProfitLoading && !playersProfitError && (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500">
+                      <th className="py-2 pr-4">ID</th>
+                      <th className="py-2 pr-4">Imię</th>
+                      <th className="py-2 pr-4">Nazwisko</th>
+                      <th className="py-2 pr-4">Saldo</th>
+                      <th className="py-2 pr-4">Zysk</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(playersProfit || [])
+                      .filter(p => {
+                        const q = playersFilter.trim().toLowerCase();
+                        if (!q) return true;
+                        return p.name.toLowerCase().includes(q) || p.lastName.toLowerCase().includes(q);
+                      })
+                      .map((p) => (
+                        <tr key={p.playerId} className="border-t border-cyan-900/20">
+                          <td className="py-2 pr-4 text-gray-800">{p.playerId}</td>
+                          <td className="py-2 pr-4 text-gray-800">{p.name}</td>
+                          <td className="py-2 pr-4 text-gray-800">{p.lastName}</td>
+                          <td className="py-2 pr-4 text-gray-800">{p.accountBalance.toFixed(2)}</td>
+                          <td className={`py-2 pr-4 font-medium ${p.profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{p.profit.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Informacje o administratorze</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <div className="text-gray-500">Imię i nazwisko</div>
+                <div className="font-medium">{user?.name} {user?.lastName}</div>
+              </div>
+              <div>
+                <div className="text-gray-500">Email</div>
+                <div className="font-medium break-all">{user?.email}</div>
+              </div>
+              <div>
+                <div className="text-gray-500">ID użytkownika</div>
+                <div className="font-medium">{user?.userId}</div>
           </div>
         </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
