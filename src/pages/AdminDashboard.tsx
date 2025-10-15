@@ -1,6 +1,18 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { apiService, type AdminWinLossRatio, type AdminBookmakerProfit } from '../services/api';
+import { apiService, type AdminWinLossRatio, type AdminBookmakerProfit, type AdminSportCouponsItem, type AdminSportEffectivenessItem, type AdminMonthlyCouponsItem } from '../services/api';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 const AdminDashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -10,6 +22,15 @@ const AdminDashboard: React.FC = () => {
   const [profit, setProfit] = React.useState<AdminBookmakerProfit | null>(null);
   const [profitLoading, setProfitLoading] = React.useState<boolean>(false);
   const [profitError, setProfitError] = React.useState<string | null>(null);
+  const [sportCoupons, setSportCoupons] = React.useState<AdminSportCouponsItem[] | null>(null);
+  const [sportCouponsLoading, setSportCouponsLoading] = React.useState<boolean>(false);
+  const [sportCouponsError, setSportCouponsError] = React.useState<string | null>(null);
+  const [sportEffectiveness, setSportEffectiveness] = React.useState<AdminSportEffectivenessItem[] | null>(null);
+  const [sportEffectivenessLoading, setSportEffectivenessLoading] = React.useState<boolean>(false);
+  const [sportEffectivenessError, setSportEffectivenessError] = React.useState<string | null>(null);
+  const [monthlyCoupons, setMonthlyCoupons] = React.useState<AdminMonthlyCouponsItem[] | null>(null);
+  const [monthlyCouponsLoading, setMonthlyCouponsLoading] = React.useState<boolean>(false);
+  const [monthlyCouponsError, setMonthlyCouponsError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let mounted = true;
@@ -39,6 +60,45 @@ const AdminDashboard: React.FC = () => {
       }
     }
     loadProfit();
+    async function loadSportCoupons() {
+      setSportCouponsLoading(true);
+      setSportCouponsError(null);
+      try {
+        const res = await apiService.fetchAdminSportCoupons();
+        if (mounted) setSportCoupons(res);
+      } catch (e: any) {
+        if (mounted) setSportCouponsError(e?.message || 'Nie udało się pobrać kuponów per sport');
+      } finally {
+        if (mounted) setSportCouponsLoading(false);
+      }
+    }
+    loadSportCoupons();
+    async function loadSportEffectiveness() {
+      setSportEffectivenessLoading(true);
+      setSportEffectivenessError(null);
+      try {
+        const res = await apiService.fetchAdminSportEffectiveness();
+        if (mounted) setSportEffectiveness(res);
+      } catch (e: any) {
+        if (mounted) setSportEffectivenessError(e?.message || 'Nie udało się pobrać skuteczności per sport');
+      } finally {
+        if (mounted) setSportEffectivenessLoading(false);
+      }
+    }
+    loadSportEffectiveness();
+    async function loadMonthlyCoupons() {
+      setMonthlyCouponsLoading(true);
+      setMonthlyCouponsError(null);
+      try {
+        const res = await apiService.fetchAdminMonthlyCoupons();
+        if (mounted) setMonthlyCoupons(res);
+      } catch (e: any) {
+        if (mounted) setMonthlyCouponsError(e?.message || 'Nie udało się pobrać miesięcznych kuponów');
+      } finally {
+        if (mounted) setMonthlyCouponsLoading(false);
+      }
+    }
+    loadMonthlyCoupons();
     return () => {
       mounted = false;
     };
@@ -139,6 +199,121 @@ const AdminDashboard: React.FC = () => {
                   <p className="text-2xl font-bold text-amber-900">{profit.bookmakerProfit.toFixed(2)}</p>
                 </div>
               </div>
+            )}
+          </div>
+
+          <div className="mt-8 p-6 bg-white border rounded-lg">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Kupony per sport</h3>
+            {sportCouponsLoading && (
+              <p className="text-gray-600">Ładowanie...</p>
+            )}
+            {sportCouponsError && (
+              <p className="text-red-600">{sportCouponsError}</p>
+            )}
+            {!sportCouponsLoading && !sportCouponsError && sportCoupons && sportCoupons.length > 0 && (
+              <ChartContainer
+                config={Object.fromEntries(
+                  sportCoupons.map((s) => [s.sportName, { label: s.sportName }])
+                )}
+                className="h-80"
+              >
+                <BarChart data={sportCoupons}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="sportName"
+                    tickLine={false}
+                    axisLine={false}
+                    interval={0}
+                    height={70}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis allowDecimals={false} />
+                  <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
+                  <Bar dataKey="betSlipCount" fill="hsl(var(--primary))" radius={4} />
+                </BarChart>
+              </ChartContainer>
+            )}
+            {!sportCouponsLoading && !sportCouponsError && sportCoupons && sportCoupons.length === 0 && (
+              <p className="text-gray-600">Brak danych.</p>
+            )}
+          </div>
+
+          <div className="mt-8 p-6 bg-white border rounded-lg">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Skuteczność per sport</h3>
+            {sportEffectivenessLoading && (
+              <p className="text-gray-600">Ładowanie...</p>
+            )}
+            {sportEffectivenessError && (
+              <p className="text-red-600">{sportEffectivenessError}</p>
+            )}
+            {!sportEffectivenessLoading && !sportEffectivenessError && sportEffectiveness && sportEffectiveness.length > 0 && (
+              <ChartContainer
+                config={Object.fromEntries(
+                  sportEffectiveness.map((s) => [s.sportName, { label: s.sportName }])
+                )}
+                className="h-80"
+              >
+                <BarChart data={sportEffectiveness}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="sportName"
+                    tickLine={false}
+                    axisLine={false}
+                    interval={0}
+                    height={70}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis
+                    domain={[0, 100]}
+                    tickFormatter={(v) => `${v}%`}
+                    allowDecimals={false}
+                  />
+                  <ChartTooltip
+                    cursor={{ fill: 'hsl(var(--muted))' }}
+                    content={<ChartTooltipContent />}
+                  />
+                  <Bar dataKey="effectivenessPercent" fill="hsl(var(--secondary))" radius={4} />
+                </BarChart>
+              </ChartContainer>
+            )}
+            {!sportEffectivenessLoading && !sportEffectivenessError && sportEffectiveness && sportEffectiveness.length === 0 && (
+              <p className="text-gray-600">Brak danych.</p>
+            )}
+          </div>
+
+          <div className="mt-8 p-6 bg-white border rounded-lg">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Kupony miesięcznie (bieżący rok)</h3>
+            {monthlyCouponsLoading && (
+              <p className="text-gray-600">Ładowanie...</p>
+            )}
+            {monthlyCouponsError && (
+              <p className="text-red-600">{monthlyCouponsError}</p>
+            )}
+            {!monthlyCouponsLoading && !monthlyCouponsError && monthlyCoupons && monthlyCoupons.length > 0 && (
+              <ChartContainer
+                config={Object.fromEntries(
+                  monthlyCoupons.map((m) => [m.monthName, { label: m.monthName }])
+                )}
+                className="h-80"
+              >
+                <BarChart data={monthlyCoupons}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="monthName"
+                    tickLine={false}
+                    axisLine={false}
+                    interval={0}
+                    height={40}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis allowDecimals={false} />
+                  <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
+                  <Bar dataKey="betsCount" fill="hsl(var(--primary))" radius={4} />
+                </BarChart>
+              </ChartContainer>
+            )}
+            {!monthlyCouponsLoading && !monthlyCouponsError && monthlyCoupons && monthlyCoupons.length === 0 && (
+              <p className="text-gray-600">Brak danych.</p>
             )}
           </div>
 

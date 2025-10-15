@@ -61,6 +61,26 @@ export interface AdminBookmakerProfit {
   bookmakerProfit: number;
 }
 
+export interface AdminSportCouponsItem {
+  sportId: number;
+  sportName: string;
+  betSlipCount: number;
+}
+
+export interface AdminSportEffectivenessItem {
+  sportId: number;
+  sportName: string;
+  totalBets: number;
+  wonBets: number;
+  effectivenessPercent: number;
+}
+
+export interface AdminMonthlyCouponsItem {
+  monthName: string;
+  betsCount: number;
+  totalYearCount: number;
+}
+
 class ApiService {
   private baseUrl = '/api';
 
@@ -190,6 +210,69 @@ class ApiService {
       return data as AdminBookmakerProfit;
     } catch (error) {
       console.error('Błąd podczas pobierania zysku bukmachera (admin):', error);
+      throw error;
+    }
+  }
+
+  async fetchAdminSportCoupons(): Promise<AdminSportCouponsItem[]> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Admin/sport-coupons`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return Array.isArray(data) ? (data as AdminSportCouponsItem[]) : [];
+    } catch (error) {
+      console.error('Błąd podczas pobierania kuponów per sport (admin):', error);
+      throw error;
+    }
+  }
+
+  async fetchAdminSportEffectiveness(): Promise<AdminSportEffectivenessItem[]> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Admin/sport-effectiveness`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return Array.isArray(data) ? (data as AdminSportEffectivenessItem[]) : [];
+    } catch (error) {
+      console.error('Błąd podczas pobierania skuteczności per sport (admin):', error);
+      throw error;
+    }
+  }
+
+  async fetchAdminMonthlyCoupons(): Promise<AdminMonthlyCouponsItem[]> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Admin/monthly-coupons`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return Array.isArray(data) ? (data as AdminMonthlyCouponsItem[]) : [];
+    } catch (error) {
+      console.error('Błąd podczas pobierania kuponów miesięcznych (admin):', error);
       throw error;
     }
   }
