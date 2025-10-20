@@ -89,6 +89,25 @@ export interface AdminPlayerProfitItem {
   profit: number;
 }
 
+export interface UncompletedEvent {
+  eventId: number;
+  eventName: string;
+  eventDate: string;
+  odds: Array<{
+    teamId: number;
+    teamName: string;
+    oddsValue: number;
+  }>;
+}
+
+export interface UpdateEventResultRequest {
+  eventId: number;
+  team1Id: number;
+  team2Id: number;
+  team1Score: number;
+  team2Score: number;
+}
+
 class ApiService {
   private baseUrl = '/api';
 
@@ -302,6 +321,46 @@ class ApiService {
       return Array.isArray(data) ? (data as AdminPlayerProfitItem[]) : [];
     } catch (error) {
       console.error('Błąd podczas pobierania zysku graczy (admin):', error);
+      throw error;
+    }
+  }
+
+  async fetchUncompletedEvents(): Promise<UncompletedEvent[]> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Admin/events/uncompleted`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return Array.isArray(data) ? (data as UncompletedEvent[]) : [];
+    } catch (error) {
+      console.error('Błąd podczas pobierania nieukończonych wydarzeń:', error);
+      throw error;
+    }
+  }
+
+  async updateEventResult(request: UpdateEventResultRequest): Promise<void> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Admin/update-event-result`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Błąd podczas aktualizacji wyniku wydarzenia:', error);
       throw error;
     }
   }

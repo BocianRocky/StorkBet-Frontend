@@ -1,12 +1,16 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { apiService, type AdminWinLossRatio, type AdminBookmakerProfit, type AdminSportCouponsItem, type AdminSportEffectivenessItem, type AdminMonthlyCouponsItem, type AdminPlayerProfitItem } from '../services/api';
+import { apiService, type AdminWinLossRatio, type AdminBookmakerProfit, type AdminSportCouponsItem, type AdminSportEffectivenessItem, type AdminMonthlyCouponsItem, type AdminPlayerProfitItem, type UncompletedEvent, type UpdateEventResultRequest } from '../services/api';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Bar,
   BarChart,
@@ -36,6 +40,28 @@ const AdminDashboard: React.FC = () => {
   const [playersProfitLoading, setPlayersProfitLoading] = React.useState<boolean>(false);
   const [playersProfitError, setPlayersProfitError] = React.useState<string | null>(null);
   const [playersFilter, setPlayersFilter] = React.useState<string>("\n");
+  
+  // Uncompleted events state
+  const [uncompletedEvents, setUncompletedEvents] = React.useState<UncompletedEvent[] | null>(null);
+  const [uncompletedEventsLoading, setUncompletedEventsLoading] = React.useState<boolean>(false);
+  const [uncompletedEventsError, setUncompletedEventsError] = React.useState<string | null>(null);
+  const [selectedEvent, setSelectedEvent] = React.useState<UncompletedEvent | null>(null);
+  const [updatingResult, setUpdatingResult] = React.useState<boolean>(false);
+  const [resultForm, setResultForm] = React.useState<{
+    team1Id: number;
+    team2Id: number;
+    team1Score: number;
+    team2Score: number;
+  }>({
+    team1Id: 0,
+    team2Id: 0,
+    team1Score: 0,
+    team2Score: 0,
+  });
+  const [resultTeams, setResultTeams] = React.useState<{
+    team1Name: string;
+    team2Name: string;
+  }>({ team1Name: '', team2Name: '' });
 
   React.useEffect(() => {
     let mounted = true;
@@ -117,24 +143,114 @@ const AdminDashboard: React.FC = () => {
       }
     }
     loadPlayersProfit();
+    async function loadUncompletedEvents() {
+      setUncompletedEventsLoading(true);
+      setUncompletedEventsError(null);
+      try {
+        const res = await apiService.fetchUncompletedEvents();
+        if (mounted) setUncompletedEvents(res);
+      } catch (e: any) {
+        if (mounted) setUncompletedEventsError(e?.message || 'Nie udało się pobrać nieukończonych wydarzeń');
+      } finally {
+        if (mounted) setUncompletedEventsLoading(false);
+      }
+    }
+    loadUncompletedEvents();
     return () => {
       mounted = false;
     };
   }, []);
 
+  const handleSelectEvent = (event: UncompletedEvent) => {
+    setSelectedEvent(event);
+    // Prefer mapping based on eventName pattern: "Team A vs Team B"
+    const nameParts = event.eventName.split(/\s+vs\.?\s+/i);
+    const nonDrawOdds = event.odds.filter(odd => odd.teamName !== 'Draw');
+
+    if (nameParts.length === 2) {
+      const leftName = nameParts[0].trim();
+      const rightName = nameParts[1].trim();
+      const leftOdd = nonDrawOdds.find(o => o.teamName === leftName);
+      const rightOdd = nonDrawOdds.find(o => o.teamName === rightName);
+
+      if (leftOdd && rightOdd) {
+        setResultForm({
+          team1Id: leftOdd.teamId,
+          team2Id: rightOdd.teamId,
+          team1Score: 0,
+          team2Score: 0,
+        });
+        setResultTeams({ team1Name: leftName, team2Name: rightName });
+        return;
+      }
+    }
+
+    // Fallback: take first two non-draw odds as-is
+    if (nonDrawOdds.length >= 2) {
+      setResultForm({
+        team1Id: nonDrawOdds[0].teamId,
+        team2Id: nonDrawOdds[1].teamId,
+        team1Score: 0,
+        team2Score: 0,
+      });
+      setResultTeams({ team1Name: nonDrawOdds[0].teamName, team2Name: nonDrawOdds[1].teamName });
+    }
+  };
+
+  const handleUpdateResult = async () => {
+    if (!selectedEvent) return;
+    
+    setUpdatingResult(true);
+    try {
+      const request: UpdateEventResultRequest = {
+        eventId: selectedEvent.eventId,
+        team1Id: resultForm.team1Id,
+        team2Id: resultForm.team2Id,
+        team1Score: resultForm.team1Score,
+        team2Score: resultForm.team2Score,
+      };
+      
+      await apiService.updateEventResult(request);
+      
+      // Refresh uncompleted events
+      const updatedEvents = await apiService.fetchUncompletedEvents();
+      setUncompletedEvents(updatedEvents);
+      setSelectedEvent(null);
+      setResultForm({
+        team1Id: 0,
+        team2Id: 0,
+        team1Score: 0,
+        team2Score: 0,
+      });
+      setResultTeams({ team1Name: '', team2Name: '' });
+    } catch (error: any) {
+      console.error('Błąd podczas aktualizacji wyniku:', error);
+      alert('Nie udało się zaktualizować wyniku: ' + (error?.message || 'Nieznany błąd'));
+    } finally {
+      setUpdatingResult(false);
+    }
+  };
+
   return (
     <div className="p-4 max-w-7xl mx-auto w-full mt-6">
-          <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-4xl font-semibold">Panel administracyjny</h1>
-            <button
-              onClick={logout}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors"
-            >
-              Wyloguj
-            </button>
-          </div>
-          
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <button
+          onClick={logout}
+          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors"
+        >
+          Wyloguj
+        </button>
+      </div>
+      
+      <Tabs defaultValue="statistics" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="statistics">Statystyki</TabsTrigger>
+          <TabsTrigger value="matches">Mecze bez wyniku</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="statistics" className="mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <Card>
           <CardHeader>
             <CardTitle>Win/Loss Ratio</CardTitle>
@@ -399,6 +515,109 @@ const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+        
+        <TabsContent value="matches" className="mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Uncompleted Events List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Mecze bez wyniku</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {uncompletedEventsLoading && (
+                  <p className="text-gray-600">Ładowanie...</p>
+                )}
+                {uncompletedEventsError && (
+                  <p className="text-red-600">{uncompletedEventsError}</p>
+                )}
+                {!uncompletedEventsLoading && !uncompletedEventsError && uncompletedEvents && uncompletedEvents.length > 0 && (
+                  <div className="space-y-3">
+                    {uncompletedEvents.map((event) => (
+                      <div
+                        key={event.eventId}
+                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                          selectedEvent?.eventId === event.eventId
+                            ? 'border-cyan-500 bg-cyan-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => handleSelectEvent(event)}
+                      >
+                        <div className="font-medium">{event.eventName}</div>
+                        <div className="text-sm text-gray-600">
+                          {new Date(event.eventDate).toLocaleString('pl-PL')}
+                        </div>
+                        <div className="text-sm text-gray-500 mt-1">
+                          Kursy: {event.odds.map(odd => `${odd.teamName}: ${odd.oddsValue}`).join(', ')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!uncompletedEventsLoading && !uncompletedEventsError && uncompletedEvents && uncompletedEvents.length === 0 && (
+                  <p className="text-gray-600">Brak meczów bez wyniku.</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Result Update Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Wprowadź wynik</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {selectedEvent ? (
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium">Wybrany mecz:</Label>
+                      <p className="text-sm text-gray-600">{selectedEvent.eventName}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="team1Score">Wynik: {resultTeams.team1Name || 'Zespół 1'}</Label>
+                        <Input
+                          id="team1Score"
+                          type="number"
+                          min="0"
+                          value={resultForm.team1Score}
+                          onChange={(e) => setResultForm(prev => ({
+                            ...prev,
+                            team1Score: parseInt(e.target.value) || 0
+                          }))}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="team2Score">Wynik: {resultTeams.team2Name || 'Zespół 2'}</Label>
+                        <Input
+                          id="team2Score"
+                          type="number"
+                          min="0"
+                          value={resultForm.team2Score}
+                          onChange={(e) => setResultForm(prev => ({
+                            ...prev,
+                            team2Score: parseInt(e.target.value) || 0
+                          }))}
+                        />
+                      </div>
+                    </div>
+                    
+                    <Button
+                      onClick={handleUpdateResult}
+                      disabled={updatingResult}
+                      className="w-full"
+                    >
+                      {updatingResult ? 'Aktualizowanie...' : 'Zaktualizuj wynik'}
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-gray-600">Wybierz mecz z listy po lewej stronie, aby wprowadzić wynik.</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
