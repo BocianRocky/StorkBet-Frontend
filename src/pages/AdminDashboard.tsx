@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { apiService, type AdminWinLossRatio, type AdminBookmakerProfit, type AdminSportCouponsItem, type AdminSportEffectivenessItem, type AdminMonthlyCouponsItem, type AdminPlayerProfitItem, type UncompletedEvent, type UpdateEventResultRequest } from '../services/api';
+import { apiService, type AdminWinLossRatio, type AdminBookmakerProfit, type AdminSportCouponsItem, type AdminSportEffectivenessItem, type AdminMonthlyCouponsItem, type AdminPlayerProfitItem, type UncompletedEvent, type UpdateEventResultRequest, type PlayerDetails } from '../services/api';
 import {
   ChartContainer,
   ChartTooltip,
@@ -62,6 +62,21 @@ const AdminDashboard: React.FC = () => {
     team1Name: string;
     team2Name: string;
   }>({ team1Name: '', team2Name: '' });
+  
+  // Players state
+  const [selectedPlayer, setSelectedPlayer] = React.useState<AdminPlayerProfitItem | null>(null);
+  const [playerDetails, setPlayerDetails] = React.useState<PlayerDetails | null>(null);
+  const [playerDetailsLoading, setPlayerDetailsLoading] = React.useState<boolean>(false);
+  const [playerDetailsError, setPlayerDetailsError] = React.useState<string | null>(null);
+  const [isEditingPlayer, setIsEditingPlayer] = React.useState<boolean>(false);
+  const [updatingPlayer, setUpdatingPlayer] = React.useState<boolean>(false);
+  const [playerEditForm, setPlayerEditForm] = React.useState<{
+    name: string;
+    lastName: string;
+    email: string;
+    accountBalance: number;
+    role: number;
+  }>({ name: '', lastName: '', email: '', accountBalance: 0, role: 2 });
 
   React.useEffect(() => {
     let mounted = true;
@@ -231,6 +246,54 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleSelectPlayer = async (player: AdminPlayerProfitItem) => {
+    setSelectedPlayer(player);
+    setPlayerDetailsLoading(true);
+    setPlayerDetailsError(null);
+    setIsEditingPlayer(false);
+    try {
+      const details = await apiService.fetchPlayerDetails(player.playerId);
+      setPlayerDetails(details);
+      setPlayerEditForm({
+        name: details.name,
+        lastName: details.lastName,
+        email: details.email,
+        accountBalance: details.accountBalance,
+        role: 2,
+      });
+    } catch (error: any) {
+      setPlayerDetailsError(error?.message || 'Nie udało się pobrać szczegółów gracza');
+    } finally {
+      setPlayerDetailsLoading(false);
+    }
+  };
+
+  const handleSavePlayer = async () => {
+    if (!selectedPlayer) return;
+    setUpdatingPlayer(true);
+    try {
+      await apiService.updatePlayer({
+        playerId: selectedPlayer.playerId,
+        name: playerEditForm.name,
+        lastName: playerEditForm.lastName,
+        email: playerEditForm.email,
+        accountBalance: playerEditForm.accountBalance,
+        role: playerEditForm.role,
+      });
+      const [players, details] = await Promise.all([
+        apiService.fetchAdminPlayersProfit(),
+        apiService.fetchPlayerDetails(selectedPlayer.playerId),
+      ]);
+      setPlayersProfit(players);
+      setPlayerDetails(details);
+      setIsEditingPlayer(false);
+    } catch (error: any) {
+      alert(error?.message || 'Nie udało się zaktualizować danych gracza');
+    } finally {
+      setUpdatingPlayer(false);
+    }
+  };
+
   return (
     <div className="p-4 max-w-7xl mx-auto w-full mt-6">
       <div className="flex justify-between items-center mb-6">
@@ -244,9 +307,10 @@ const AdminDashboard: React.FC = () => {
       </div>
       
       <Tabs defaultValue="statistics" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="statistics">Statystyki</TabsTrigger>
           <TabsTrigger value="matches">Mecze bez wyniku</TabsTrigger>
+          <TabsTrigger value="players">Gracze</TabsTrigger>
         </TabsList>
         
         <TabsContent value="statistics" className="mt-6">
@@ -612,6 +676,232 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 ) : (
                   <p className="text-gray-600">Wybierz mecz z listy po lewej stronie, aby wprowadzić wynik.</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="players" className="mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Players List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Lista graczy</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-1">
+                    <label className="block text-sm text-gray-600 mb-1">Filtr (imię lub nazwisko)</label>
+                    <input
+                      type="text"
+                      value={playersFilter}
+                      onChange={(e) => setPlayersFilter(e.target.value)}
+                      placeholder="np. Jan lub Kowalski"
+                      className="w-full rounded-md border border-cyan-900/40 bg-[#0a1724] text-zinc-100 placeholder:text-cyan-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
+                    />
+                  </div>
+                </div>
+
+                {playersProfitLoading && <p className="text-gray-600">Ładowanie...</p>}
+                {playersProfitError && <p className="text-red-600">{playersProfitError}</p>}
+                {!playersProfitLoading && !playersProfitError && (
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {(playersProfit || [])
+                      .filter(p => {
+                        const q = playersFilter.trim().toLowerCase();
+                        if (!q) return true;
+                        return p.name.toLowerCase().includes(q) || p.lastName.toLowerCase().includes(q);
+                      })
+                      .map((p) => (
+                        <div
+                          key={p.playerId}
+                          className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                            selectedPlayer?.playerId === p.playerId
+                              ? 'border-cyan-500 bg-cyan-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                          onClick={() => handleSelectPlayer(p)}
+                        >
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <div className="font-medium">{p.name} {p.lastName}</div>
+                              <div className="text-sm text-gray-600">ID: {p.playerId}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className={`font-medium ${p.profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                {p.profit.toFixed(2)} zł
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                Saldo: {p.accountBalance.toFixed(2)} zł
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Player Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Szczegóły gracza</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {selectedPlayer ? (
+                  <div className="space-y-4">
+                    {playerDetailsLoading && (
+                      <p className="text-gray-600">Ładowanie szczegółów...</p>
+                    )}
+                    {playerDetailsError && (
+                      <p className="text-red-600">{playerDetailsError}</p>
+                    )}
+                    {!playerDetailsLoading && !playerDetailsError && playerDetails && (
+                      <div className="space-y-4">
+                        <div className="flex justify-end">
+                          {!isEditingPlayer ? (
+                            <Button onClick={() => setIsEditingPlayer(true)}>Edytuj</Button>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button variant="ghost" onClick={() => { setIsEditingPlayer(false); setPlayerEditForm({ name: playerDetails.name, lastName: playerDetails.lastName, email: playerDetails.email, accountBalance: playerDetails.accountBalance, role: playerEditForm.role }); }}>Anuluj</Button>
+                              <Button onClick={handleSavePlayer} disabled={updatingPlayer}>{updatingPlayer ? 'Zapisywanie...' : 'Zapisz'}</Button>
+                            </div>
+                          )}
+                        </div>
+
+                        {!isEditingPlayer ? (
+                          <>
+                            {/* Basic Info */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label className="text-sm font-medium text-gray-500">Imię i nazwisko</Label>
+                                <p className="text-sm">{playerDetails.name} {playerDetails.lastName}</p>
+                              </div>
+                              <div>
+                                <Label className="text-sm font-medium text-gray-500">Email</Label>
+                                <p className="text-sm">{playerDetails.email}</p>
+                              </div>
+                            </div>
+
+                            {/* Financial Info */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label className="text-sm font-medium text-gray-500">Saldo konta</Label>
+                                <p className="text-sm font-medium">{playerDetails.accountBalance.toFixed(2)} zł</p>
+                              </div>
+                              <div>
+                                <Label className="text-sm font-medium text-gray-500">Zysk/Strata</Label>
+                                <p className={`text-sm font-medium ${playerDetails.profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                  {playerDetails.profit.toFixed(2)} zł
+                                </p>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor="editName">Imię</Label>
+                                <Input id="editName" value={playerEditForm.name} onChange={(e) => setPlayerEditForm(prev => ({ ...prev, name: e.target.value }))} />
+                              </div>
+                              <div>
+                                <Label htmlFor="editLastName">Nazwisko</Label>
+                                <Input id="editLastName" value={playerEditForm.lastName} onChange={(e) => setPlayerEditForm(prev => ({ ...prev, lastName: e.target.value }))} />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor="editEmail">Email</Label>
+                                <Input id="editEmail" type="email" value={playerEditForm.email} onChange={(e) => setPlayerEditForm(prev => ({ ...prev, email: e.target.value }))} />
+                              </div>
+                              <div>
+                                <Label htmlFor="editBalance">Saldo konta</Label>
+                                <Input id="editBalance" type="number" value={playerEditForm.accountBalance} onChange={(e) => setPlayerEditForm(prev => ({ ...prev, accountBalance: parseFloat(e.target.value) || 0 }))} />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor="editRole">Rola</Label>
+                                <select
+                                  id="editRole"
+                                  className="w-full rounded-md border border-cyan-900/40 bg-[#0a1724] text-zinc-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
+                                  value={playerEditForm.role}
+                                  onChange={(e) => setPlayerEditForm(prev => ({ ...prev, role: parseInt(e.target.value) }))}
+                                >
+                                  <option value={2}>Użytkownik</option>
+                                  <option value={1}>Administrator</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Betting Stats */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-sm font-medium text-gray-500">Łącznie zakładów</Label>
+                            <p className="text-sm">{playerDetails.betsCount}</p>
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-gray-500">Skuteczność</Label>
+                            <p className="text-sm">{playerDetails.effectivenessPercent.toFixed(1)}%</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-sm font-medium text-gray-500">Wygrane zakłady</Label>
+                            <p className="text-sm">{playerDetails.wonBets}</p>
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-gray-500">Przegrane zakłady</Label>
+                            <p className="text-sm">{playerDetails.lostBets}</p>
+                          </div>
+                        </div>
+
+                        {/* Financial Details */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-sm font-medium text-gray-500">Suma stawek</Label>
+                            <p className="text-sm">{playerDetails.totalStake.toFixed(2)} zł</p>
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-gray-500">Suma wygranych</Label>
+                            <p className="text-sm">{playerDetails.totalWinnings.toFixed(2)} zł</p>
+                          </div>
+                        </div>
+
+                        {/* Transaction Details */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-sm font-medium text-gray-500">Łączne wpłaty</Label>
+                            <p className="text-sm">{playerDetails.totalDeposits.toFixed(2)} zł</p>
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-gray-500">Łączne wypłaty</Label>
+                            <p className="text-sm">{playerDetails.totalWithdrawals.toFixed(2)} zł</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-sm font-medium text-gray-500">Liczba transakcji</Label>
+                            <p className="text-sm">{playerDetails.transactionsCount}</p>
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-gray-500">Ostatni zakład</Label>
+                            <p className="text-sm">
+                              {playerDetails.lastBetDate ? new Date(playerDetails.lastBetDate).toLocaleString('pl-PL') : 'Brak'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-600">Wybierz gracza z listy po lewej stronie, aby zobaczyć szczegóły.</p>
                 )}
               </CardContent>
             </Card>

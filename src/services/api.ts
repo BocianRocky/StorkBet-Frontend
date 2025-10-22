@@ -108,6 +108,34 @@ export interface UpdateEventResultRequest {
   team2Score: number;
 }
 
+export interface PlayerDetails {
+  playerId: number;
+  name: string;
+  lastName: string;
+  email: string;
+  accountBalance: number;
+  betsCount: number;
+  wonBets: number;
+  lostBets: number;
+  effectivenessPercent: number;
+  totalStake: number;
+  totalWinnings: number;
+  profit: number;
+  lastBetDate: string;
+  transactionsCount: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
+}
+
+export interface UpdatePlayerRequest {
+  playerId: number;
+  name: string;
+  lastName: string;
+  email: string;
+  accountBalance: number;
+  role: number;
+}
+
 class ApiService {
   private baseUrl = '/api';
 
@@ -361,6 +389,47 @@ class ApiService {
       }
     } catch (error) {
       console.error('Błąd podczas aktualizacji wyniku wydarzenia:', error);
+      throw error;
+    }
+  }
+
+  async fetchPlayerDetails(playerId: number): Promise<PlayerDetails> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Admin/players-profit/${playerId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data as PlayerDetails;
+    } catch (error) {
+      console.error('Błąd podczas pobierania szczegółów gracza:', error);
+      throw error;
+    }
+  }
+
+  async updatePlayer(request: UpdatePlayerRequest): Promise<void> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Admin/players/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Błąd podczas aktualizacji gracza (admin):', error);
       throw error;
     }
   }
