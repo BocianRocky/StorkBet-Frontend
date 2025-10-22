@@ -433,6 +433,25 @@ class ApiService {
       throw error;
     }
   }
+
+  async deletePlayer(playerId: number): Promise<void> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Admin/${playerId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Błąd podczas usuwania gracza (admin):', error);
+      throw error;
+    }
+  }
 }
 
 export const apiService = new ApiService();

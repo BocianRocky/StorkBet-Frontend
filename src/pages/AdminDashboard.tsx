@@ -70,6 +70,7 @@ const AdminDashboard: React.FC = () => {
   const [playerDetailsError, setPlayerDetailsError] = React.useState<string | null>(null);
   const [isEditingPlayer, setIsEditingPlayer] = React.useState<boolean>(false);
   const [updatingPlayer, setUpdatingPlayer] = React.useState<boolean>(false);
+  const [deletingPlayer, setDeletingPlayer] = React.useState<boolean>(false);
   const [playerEditForm, setPlayerEditForm] = React.useState<{
     name: string;
     lastName: string;
@@ -291,6 +292,25 @@ const AdminDashboard: React.FC = () => {
       alert(error?.message || 'Nie udało się zaktualizować danych gracza');
     } finally {
       setUpdatingPlayer(false);
+    }
+  };
+
+  const handleDeletePlayer = async () => {
+    if (!selectedPlayer) return;
+    const confirmed = window.confirm(`Czy na pewno chcesz usunąć użytkownika ID ${selectedPlayer.playerId}?`);
+    if (!confirmed) return;
+    setDeletingPlayer(true);
+    try {
+      await apiService.deletePlayer(selectedPlayer.playerId);
+      const players = await apiService.fetchAdminPlayersProfit();
+      setPlayersProfit(players);
+      setSelectedPlayer(null);
+      setPlayerDetails(null);
+      setIsEditingPlayer(false);
+    } catch (error: any) {
+      alert(error?.message || 'Nie udało się usunąć użytkownika');
+    } finally {
+      setDeletingPlayer(false);
     }
   };
 
@@ -760,7 +780,14 @@ const AdminDashboard: React.FC = () => {
                     )}
                     {!playerDetailsLoading && !playerDetailsError && playerDetails && (
                       <div className="space-y-4">
-                        <div className="flex justify-end">
+                        <div className="flex justify-between">
+                          <Button
+                            variant="destructive"
+                            onClick={handleDeletePlayer}
+                            disabled={deletingPlayer}
+                          >
+                            {deletingPlayer ? 'Usuwanie...' : 'Usuń'}
+                          </Button>
                           {!isEditingPlayer ? (
                             <Button onClick={() => setIsEditingPlayer(true)}>Edytuj</Button>
                           ) : (
