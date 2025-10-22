@@ -79,6 +79,32 @@ const AdminDashboard: React.FC = () => {
     role: number;
   }>({ name: '', lastName: '', email: '', accountBalance: 0, role: 2 });
 
+  // Promotions state
+  const [promotionForm, setPromotionForm] = React.useState<{
+    promotionName: string;
+    dateStart: string;
+    dateEnd: string;
+    bonusType: string;
+    bonusValue: number;
+    promoCode: string;
+    minDeposit: number;
+    maxDeposit: number;
+    description: string;
+    imageFile: File | null;
+  }>({
+    promotionName: '',
+    dateStart: '',
+    dateEnd: '',
+    bonusType: '',
+    bonusValue: 0,
+    promoCode: '',
+    minDeposit: 0,
+    maxDeposit: 0,
+    description: '',
+    imageFile: null,
+  });
+  const [creatingPromotion, setCreatingPromotion] = React.useState<boolean>(false);
+
   React.useEffect(() => {
     let mounted = true;
     async function load() {
@@ -314,6 +340,50 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleCreatePromotion = async () => {
+    if (!promotionForm.imageFile) {
+      alert('Proszę wybrać obraz promocji');
+      return;
+    }
+
+    setCreatingPromotion(true);
+    try {
+      const formData = new FormData();
+      formData.append('PromotionName', promotionForm.promotionName);
+      formData.append('DateStart', promotionForm.dateStart);
+      formData.append('DateEnd', promotionForm.dateEnd);
+      formData.append('BonusType', promotionForm.bonusType);
+      formData.append('BonusValue', promotionForm.bonusValue.toString());
+      formData.append('PromoCode', promotionForm.promoCode);
+      formData.append('MinDeposit', promotionForm.minDeposit.toString());
+      formData.append('MaxDeposit', promotionForm.maxDeposit.toString());
+      formData.append('Description', promotionForm.description);
+      formData.append('ImageFile', promotionForm.imageFile);
+
+      await apiService.createPromotion(formData);
+      
+      // Reset form
+      setPromotionForm({
+        promotionName: '',
+        dateStart: '',
+        dateEnd: '',
+        bonusType: '',
+        bonusValue: 0,
+        promoCode: '',
+        minDeposit: 0,
+        maxDeposit: 0,
+        description: '',
+        imageFile: null,
+      });
+      
+      alert('Promocja została utworzona pomyślnie!');
+    } catch (error: any) {
+      alert(error?.message || 'Nie udało się utworzyć promocji');
+    } finally {
+      setCreatingPromotion(false);
+    }
+  };
+
   return (
     <div className="p-4 max-w-7xl mx-auto w-full mt-6">
       <div className="flex justify-between items-center mb-6">
@@ -327,10 +397,11 @@ const AdminDashboard: React.FC = () => {
       </div>
       
       <Tabs defaultValue="statistics" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="statistics">Statystyki</TabsTrigger>
           <TabsTrigger value="matches">Mecze bez wyniku</TabsTrigger>
           <TabsTrigger value="players">Gracze</TabsTrigger>
+          <TabsTrigger value="promotions">Promocje</TabsTrigger>
         </TabsList>
         
         <TabsContent value="statistics" className="mt-6">
@@ -930,6 +1001,139 @@ const AdminDashboard: React.FC = () => {
                 ) : (
                   <p className="text-gray-600">Wybierz gracza z listy po lewej stronie, aby zobaczyć szczegóły.</p>
                 )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="promotions" className="mt-6">
+          <div className="max-w-4xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle>Dodaj nową promocję</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="promotionName">Nazwa promocji *</Label>
+                      <Input
+                        id="promotionName"
+                        value={promotionForm.promotionName}
+                        onChange={(e) => setPromotionForm(prev => ({ ...prev, promotionName: e.target.value }))}
+                        placeholder="Nazwa promocji"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="bonusType">Typ bonusu *</Label>
+                      <Input
+                        id="bonusType"
+                        value={promotionForm.bonusType}
+                        onChange={(e) => setPromotionForm(prev => ({ ...prev, bonusType: e.target.value }))}
+                        placeholder="np. Depozyt, Bonus"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="dateStart">Data rozpoczęcia *</Label>
+                      <Input
+                        id="dateStart"
+                        type="date"
+                        value={promotionForm.dateStart}
+                        onChange={(e) => setPromotionForm(prev => ({ ...prev, dateStart: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="dateEnd">Data zakończenia *</Label>
+                      <Input
+                        id="dateEnd"
+                        type="date"
+                        value={promotionForm.dateEnd}
+                        onChange={(e) => setPromotionForm(prev => ({ ...prev, dateEnd: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="bonusValue">Wartość bonusu (%)</Label>
+                      <Input
+                        id="bonusValue"
+                        type="number"
+                        value={promotionForm.bonusValue}
+                        onChange={(e) => setPromotionForm(prev => ({ ...prev, bonusValue: parseFloat(e.target.value) || 0 }))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="minDeposit">Min. depozyt</Label>
+                      <Input
+                        id="minDeposit"
+                        type="number"
+                        value={promotionForm.minDeposit}
+                        onChange={(e) => setPromotionForm(prev => ({ ...prev, minDeposit: parseFloat(e.target.value) || 0 }))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="maxDeposit">Maks. depozyt</Label>
+                      <Input
+                        id="maxDeposit"
+                        type="number"
+                        value={promotionForm.maxDeposit}
+                        onChange={(e) => setPromotionForm(prev => ({ ...prev, maxDeposit: parseFloat(e.target.value) || 0 }))}
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="promoCode">Kod promocyjny</Label>
+                    <Input
+                      id="promoCode"
+                      value={promotionForm.promoCode}
+                      onChange={(e) => setPromotionForm(prev => ({ ...prev, promoCode: e.target.value }))}
+                      placeholder="Opcjonalny kod promocyjny"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="description">Opis</Label>
+                    <textarea
+                      id="description"
+                      className="w-full rounded-md border border-cyan-900/40 bg-[#0a1724] text-zinc-100 placeholder:text-cyan-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
+                      rows={3}
+                      value={promotionForm.description}
+                      onChange={(e) => setPromotionForm(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Opis promocji"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="imageFile">Obraz promocji *</Label>
+                    <Input
+                      id="imageFile"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setPromotionForm(prev => ({ ...prev, imageFile: e.target.files?.[0] || null }))}
+                    />
+                    {promotionForm.imageFile && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        Wybrany plik: {promotionForm.imageFile.name}
+                      </p>
+                    )}
+                  </div>
+
+                  <Button
+                    onClick={handleCreatePromotion}
+                    disabled={creatingPromotion}
+                    className="w-full"
+                  >
+                    {creatingPromotion ? 'Tworzenie promocji...' : 'Utwórz promocję'}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

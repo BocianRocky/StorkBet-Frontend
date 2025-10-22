@@ -61,7 +61,7 @@ const Promotions = () => {
 			<h1 className="text-4xl font-semibold mb-8 mt-6">Promocje</h1>
 			<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 justify-items-center">
 				{promotions.map((p) => {
-					const imgSrc = `/${p.image}`;
+					const imgSrc = p.image.startsWith('http') ? p.image : `${import.meta.env.VITE_API_BASE_URL || ''}${p.image}`;
 					return (
 						<Card key={p.id} className="overflow-hidden bg-neutral-950 border-neutral-800">
 							<div className="aspect-[16/9] w-full overflow-hidden">

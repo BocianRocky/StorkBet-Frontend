@@ -452,6 +452,23 @@ class ApiService {
       throw error;
     }
   }
+
+  async createPromotion(formData: FormData): Promise<void> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Promotions/with-image`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Błąd podczas tworzenia promocji:', error);
+      throw error;
+    }
+  }
 }
 
 export const apiService = new ApiService();
