@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import Legal from "./pages/Legal";
 import Contact from "./pages/Contact";
 import AdminDashboard from "./pages/AdminDashboard";
+import GroupChat from "./pages/GroupChat";
 import { Toaster } from "./components/ui/toaster";
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
                 <Route path="/my-bets" element={<MyBets />} />
                 <Route path="/my-bets/:id" element={<MyBetDetails />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/groups/:groupId/chat" element={<GroupChat />} />
               </Route>
               <Route element={<ProtectedRoute requiredRoleId={1} />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />

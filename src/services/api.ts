@@ -46,6 +46,7 @@ export interface GroupedSports {
 }
 
 import { fetchWithAuth } from './fetchWithAuth';
+export interface ApiMessage { message: string }
 
 export interface AdminWinLossRatio {
   totalBets: number;
@@ -136,24 +137,60 @@ export interface UpdatePlayerRequest {
   role: number;
 }
 
+export interface GroupMember {
+  playerId: number;
+  name: string;
+  lastName: string;
+  isOwner: boolean;
+}
+
+export interface TyperGroup {
+  id: number;
+  groupName: string;
+  members: GroupMember[];
+  messageCount: number;
+}
+
+export interface CreateGroupRequest {
+  groupName: string;
+}
+
+export interface GroupMessage {
+  id: number;
+  groupId: number;
+  playerId: number;
+  playerName: string;
+  playerLastName: string;
+  messageText: string;
+}
+
+export interface SendMessageRequest {
+  messageText: string;
+}
+
+export interface AddMemberRequest {
+  playerId: number;
+}
+
 class ApiService {
   private baseUrl = '/api';
 
   async fetchOddsForSport(sportKey: string): Promise<OddsData[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/Odds/${sportKey}`, {
+      const response = await fetchWithAuth(`${this.baseUrl}/Odds/${encodeURIComponent(sportKey)}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const text = await response.text().catch(() => '');
+        throw new Error(text || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       const data: ApiEventData[] = await response.json();
-      
+
       // Przekształcenie danych z API do formatu komponentów
       return data.map((event: ApiEventData) => {
         // Znajdź zespoły i kursy
@@ -161,16 +198,16 @@ class ApiService {
         const nonDraw = event.odds.filter(odd => odd.teamName !== 'Draw');
         const homeOdds = nonDraw[0];
         const awayOdds = nonDraw[1] ?? nonDraw[0];
-        
+
         // Jeśli są więcej niż 2 zespoły (nie licząc Draw), weź pierwsze dwa
         const homeTeam = homeOdds?.teamName || 'Unknown Team';
         const awayTeam = awayOdds?.teamName || 'Unknown Team';
-        
+
         return {
           id: String(event.eventId),
           home: homeTeam,
           away: awayTeam,
-          league: `${sportKey.replace('_', ' ').toUpperCase()}`, // Użyj sportKey jako ligi
+          league: `${sportKey.replace('_', ' ').toUpperCase()}`,
           date: event.eventDate,
           odds: {
             home: homeOdds?.oddsValue,
@@ -186,6 +223,28 @@ class ApiService {
       });
     } catch (error) {
       console.error(`Błąd podczas pobierania odds dla sportu ${sportKey}:`, error);
+      throw error;
+    }
+  }
+
+  async importOddsForSport(sportKey: string): Promise<string> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Odds/${encodeURIComponent(sportKey)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        throw new Error(text || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data: ApiMessage = await response.json();
+      return data?.message || 'Operacja zakończona.';
+    } catch (error) {
+      console.error(`Błąd podczas importu kursów dla sportu ${sportKey}:`, error);
       throw error;
     }
   }
@@ -466,6 +525,114 @@ class ApiService {
       }
     } catch (error) {
       console.error('Błąd podczas tworzenia promocji:', error);
+      throw error;
+    }
+  }
+
+  async fetchMyGroups(): Promise<TyperGroup[]> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Groups/my-groups`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return Array.isArray(data) ? (data as TyperGroup[]) : [];
+    } catch (error) {
+      console.error('Błąd podczas pobierania grup typerów:', error);
+      throw error;
+    }
+  }
+
+  async createGroup(request: CreateGroupRequest): Promise<TyperGroup> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Groups`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data as TyperGroup;
+    } catch (error) {
+      console.error('Błąd podczas tworzenia grupy typerów:', error);
+      throw error;
+    }
+  }
+
+  async fetchGroupMessages(groupId: number): Promise<GroupMessage[]> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Groups/${groupId}/messages`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return Array.isArray(data) ? (data as GroupMessage[]) : [];
+    } catch (error) {
+      console.error('Błąd podczas pobierania wiadomości grupy:', error);
+      throw error;
+    }
+  }
+
+  async sendGroupMessage(groupId: number, request: SendMessageRequest): Promise<GroupMessage> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Groups/${groupId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data as GroupMessage;
+    } catch (error) {
+      console.error('Błąd podczas wysyłania wiadomości:', error);
+      throw error;
+    }
+  }
+
+  async addMemberToGroup(groupId: number, request: AddMemberRequest): Promise<void> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/Groups/${groupId}/members`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Błąd podczas dodawania członka do grupy:', error);
       throw error;
     }
   }

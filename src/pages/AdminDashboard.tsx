@@ -105,6 +105,31 @@ const AdminDashboard: React.FC = () => {
   });
   const [creatingPromotion, setCreatingPromotion] = React.useState<boolean>(false);
 
+  // Import odds by sportKey (admin) state
+  const [sportKey, setSportKey] = React.useState<string>('');
+  const [importLoading, setImportLoading] = React.useState<boolean>(false);
+  const [importError, setImportError] = React.useState<string | null>(null);
+  const [importMessage, setImportMessage] = React.useState<string | null>(null);
+
+  const handleImportOdds = async () => {
+    const key = sportKey.trim();
+    if (!key) {
+      setImportError('Podaj sportKey');
+      return;
+    }
+    setImportLoading(true);
+    setImportError(null);
+    setImportMessage(null);
+    try {
+      const message = await apiService.importOddsForSport(key);
+      setImportMessage(message);
+    } catch (e: any) {
+      setImportError(e?.message || 'Nie udało się zainicjować importu kursów');
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
   React.useEffect(() => {
     let mounted = true;
     async function load() {
@@ -667,6 +692,34 @@ const AdminDashboard: React.FC = () => {
                 <div className="font-medium">{user?.userId}</div>
           </div>
         </div>
+          </CardContent>
+        </Card>
+        
+        {/* Admin: zainicjuj import kursów po sportKey */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Import kursów według sportKey</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <div className="md:col-span-2">
+                <Label htmlFor="sportKey">SportKey (np. boxing_boxing, epl_sport)</Label>
+                <Input
+                  id="sportKey"
+                  value={sportKey}
+                  onChange={(e) => setSportKey(e.target.value)}
+                  placeholder="boxing_boxing"
+                />
+              </div>
+              <div className="flex items-end">
+                <Button className="w-full" onClick={handleImportOdds} disabled={importLoading}>
+                  {importLoading ? 'Wysyłanie...' : 'Zainicjuj import'}
+                </Button>
+              </div>
+            </div>
+
+            {importError && <p className="text-red-600 mb-2">{importError}</p>}
+            {importMessage && <p className="text-emerald-600 mb-2">{importMessage}</p>}
           </CardContent>
         </Card>
       </div>
