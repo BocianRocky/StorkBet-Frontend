@@ -2,6 +2,7 @@ import { fetchWithAuth } from './fetchWithAuth'
 
 export interface PromotionForUser {
   id: number
+  availablePromotionId: number
   promotionName: string
   dateStart: string
   dateEnd: string

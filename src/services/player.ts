@@ -39,11 +39,24 @@ export async function getProfile(): Promise<PlayerProfileResponse> {
   return res.json();
 }
 
-export async function takeBetslip(amount: number, oddsIds: number[]): Promise<void> {
+export async function takeBetslip(amount: number, oddsIds: number[], availablePromotionId?: number | null): Promise<void> {
+  const payload: {
+    amount: number;
+    oddsIds: number[];
+    availablePromotionId?: number;
+  } = {
+    amount,
+    oddsIds,
+  };
+
+  if (availablePromotionId && Number.isFinite(availablePromotionId) && availablePromotionId > 0) {
+    payload.availablePromotionId = availablePromotionId;
+  }
+
   const res = await fetchWithAuth(`${BASE_URL}/betslips`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount, oddsIds }),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) {
     const text = await res.text();

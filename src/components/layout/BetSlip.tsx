@@ -1,12 +1,14 @@
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 // Removed custom ScrollArea to match SideBar's native scroll behavior
 import { useBetSlip } from "@/context/BetSlipContext"
 import { takeBetslip } from "@/services/player"
 import { BetSuccessDialog } from "@/components/BetSuccessDialog"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/context/AuthContext"
+import { getMyPromotions, type PromotionForUser } from "@/services/promotions"
 
 const BetSlip = () => {
 
@@ -22,11 +24,83 @@ const BetSlip = () => {
         combinedOdds: number;
     } | null>(null);
     const { toast } = useToast();
+    const { isAuthenticated } = useAuth();
 
-    const potentialWin = useMemo(() => {
+    const [promotions, setPromotions] = useState<PromotionForUser[]>([]);
+    const [promotionsLoading, setPromotionsLoading] = useState(false);
+    const [promotionsError, setPromotionsError] = useState<string | null>(null);
+    const [selectedPromotionId, setSelectedPromotionId] = useState<number | null>(null);
+
+    useEffect(() => {
+        let ignore = false;
+
+        if (!isAuthenticated) {
+            setPromotions([]);
+            setSelectedPromotionId(null);
+            setPromotionsError(null);
+            setPromotionsLoading(false);
+            return;
+        }
+
+        setPromotionsLoading(true);
+        setPromotionsError(null);
+        getMyPromotions()
+            .then((data) => {
+                if (ignore) return;
+                const list = Array.isArray(data) ? data : [];
+                setPromotions(list);
+                setSelectedPromotionId((prev) => {
+                    if (!prev) return prev;
+                    return list.some((promotion) => promotion.availablePromotionId === prev) ? prev : null;
+                });
+            })
+            .catch((error: any) => {
+                if (ignore) return;
+                console.error("Nie udało się pobrać promocji:", error);
+                setPromotionsError("Nie udało się pobrać promocji. Spróbuj ponownie później.");
+            })
+            .finally(() => {
+                if (ignore) return;
+                setPromotionsLoading(false);
+            });
+
+        return () => {
+            ignore = true;
+        };
+    }, [isAuthenticated]);
+
+    const selectedPromotion = useMemo(() => {
+        if (!selectedPromotionId) return null;
+        return promotions.find((promotion) => promotion.availablePromotionId === selectedPromotionId) ?? null;
+    }, [promotions, selectedPromotionId]);
+
+    const effectiveAmount = useMemo(() => {
+        if (!amount) return 0;
+        if (!selectedPromotion) return amount;
+
+        const type = selectedPromotion.bonusType?.toLowerCase();
+        const bonusValue = selectedPromotion.bonusValue ?? 0;
+
+        if (type === "percentage") {
+            return amount + amount * (bonusValue / 100);
+        }
+
+        if (type === "fixed") {
+            return amount + bonusValue;
+        }
+
+        return amount;
+    }, [amount, selectedPromotion]);
+
+    const basePotentialWin = useMemo(() => {
         if (!amount || selections.length === 0) return 0;
         return amount * (combinedOdds || 1);
     }, [amount, combinedOdds, selections.length]);
+
+    const potentialWin = useMemo(() => {
+        if (!effectiveAmount || selections.length === 0) return 0;
+        return effectiveAmount * (combinedOdds || 1);
+    }, [effectiveAmount, combinedOdds, selections.length]);
 
     return (
       <div className="h-full w-full p-4">
@@ -103,9 +177,72 @@ const BetSlip = () => {
           </div>
         </div>
 
+        {isAuthenticated && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-neutral-200">Promocje</span>
+              {promotionsLoading && <span className="text-xs text-neutral-400">Ładowanie...</span>}
+            </div>
+            {promotionsError && (
+              <div className="mt-2 text-xs text-red-500">{promotionsError}</div>
+            )}
+            {!promotionsLoading && !promotionsError && promotions.length === 0 && (
+              <div className="mt-2 text-xs text-neutral-400">Brak dostępnych promocji.</div>
+            )}
+            {promotions.length > 0 && !promotionsError && (
+              <div className="mt-2 space-y-2">
+                <select
+                  className="w-full rounded-md border border-neutral-700 bg-neutral-900 p-2 text-sm text-neutral-100 focus:border-cyan-700 focus:outline-none"
+                  value={selectedPromotionId ?? ""}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setSelectedPromotionId(value === "" ? null : Number(value));
+                  }}
+                >
+                  <option value="">Brak promocji</option>
+                  {promotions.map((promotion) => (
+                    <option key={promotion.availablePromotionId} value={promotion.availablePromotionId}>
+                      {promotion.promotionName}
+                    </option>
+                  ))}
+                </select>
+
+                {selectedPromotion && (
+                  <div className="rounded-md border border-neutral-800 bg-neutral-950 p-3 text-xs text-neutral-300">
+                    <div className="font-semibold text-neutral-100">{selectedPromotion.promotionName}</div>
+                    <div className="mt-1 text-neutral-400">
+                      {selectedPromotion.description}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-4 text-neutral-400">
+                      <span>Bonus: {selectedPromotion.bonusType} {selectedPromotion.bonusValue}{selectedPromotion.bonusType?.toLowerCase() === "percentage" ? "%" : ""}</span>
+                      {selectedPromotion.promoCode && (
+                        <span>Kod: {selectedPromotion.promoCode}</span>
+                      )}
+                      <span>Dostępna do: {new Date(selectedPromotion.dateEnd).toLocaleDateString('pl-PL')}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="ml-1 mt-2 flex items-center justify-between text-neutral-300">
           <span className="text-sm">Potencjalna wygrana</span>
-          <span className="text-lg font-semibold">{potentialWin > 0 ? potentialWin.toFixed(2) : "-"} zł</span>
+          {selectedPromotion && amount > 0 && potentialWin !== basePotentialWin ? (
+            <div className="text-right">
+              <div className="text-sm text-neutral-500 line-through">
+                {basePotentialWin > 0 ? basePotentialWin.toFixed(2) : "-"} zł
+              </div>
+              <div className="text-lg font-semibold text-emerald-400">
+                {potentialWin > 0 ? potentialWin.toFixed(2) : "-"} zł
+              </div>
+            </div>
+          ) : (
+            <span className="text-lg font-semibold">
+              {basePotentialWin > 0 ? basePotentialWin.toFixed(2) : "-"} zł
+            </span>
+          )}
         </div>
 
         <Button
@@ -129,11 +266,12 @@ const BetSlip = () => {
               if (oddsIds.length === 0) {
                 throw new Error('Brak prawidłowych identyfikatorów kursów do wysłania.');
               }
-              await takeBetslip(amount, oddsIds);
+              const amountToSend = Number(effectiveAmount.toFixed(2));
+              await takeBetslip(amountToSend, oddsIds, selectedPromotion?.availablePromotionId);
               
               // Save success data before clearing selections
               setSuccessData({
-                amount,
+                amount: amountToSend,
                 potentialWin,
                 combinedOdds
               });
@@ -145,7 +283,7 @@ const BetSlip = () => {
               toast({
                 variant: "success",
                 title: "Kupon złożony!",
-                description: `Twój kupon na ${amount.toFixed(2)} zł został pomyślnie złożony.`,
+                description: `Twój kupon na ${amountToSend.toFixed(2)} zł został pomyślnie złożony.`,
               });
               
               clearSelections();
