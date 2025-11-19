@@ -162,7 +162,7 @@ const Navbar = () => {
                 <Link to="/promotions"><Button variant="ghost" className="text-sm px-2 py-1 font-bold">PROMOCJE</Button></Link>
                 <Button variant="ghost" className="text-sm px-2 py-1 font-bold" onClick={handleTyperZoneClick}>STREFA TYPERÓW</Button>
                 <Button variant="ghost" className="text-sm px-2 py-1 font-bold">STREFA KUPONÓW</Button>
-                <Button variant="ghost" className="text-sm px-2 py-1 font-bold">RANKING</Button>
+                <Link to="/ranking"><Button variant="ghost" className="text-sm px-2 py-1 font-bold">RANKING</Button></Link>
             </div>
 
         <div className="flex-1 flex justify-end space-x-4 min-w-0">

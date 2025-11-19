@@ -161,3 +161,22 @@ export async function withdrawal(amount: number, paymentMethod: number = 2): Pro
   }
   return;
 }
+
+export interface RankingPlayer {
+  id: number;
+  name: string;
+  lastName: string;
+  score: number;
+}
+
+export async function fetchRanking(topCount: number = 30): Promise<RankingPlayer[]> {
+  const res = await fetch(`${BASE_URL}/ranking?topCount=${topCount}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return res.json();
+}

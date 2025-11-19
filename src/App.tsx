@@ -17,6 +17,7 @@ import Legal from "./pages/Legal";
 import Contact from "./pages/Contact";
 import AdminDashboard from "./pages/AdminDashboard";
 import GroupChat from "./pages/GroupChat";
+import Ranking from "./pages/Ranking";
 import { Toaster } from "./components/ui/toaster";
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
               {/* Public routes */}
               <Route path="/" element={<Home />} />
               <Route path="/promotions" element={<Promotions />} />
+              <Route path="/ranking" element={<Ranking />} />
               <Route element={<ProtectedRoute requiredRoleId={2} />}>
                 <Route path="/my-bets" element={<MyBets />} />
                 <Route path="/my-bets/:id" element={<MyBetDetails />} />
