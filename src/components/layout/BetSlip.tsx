@@ -51,7 +51,7 @@ const BetSlip = () => {
                 setPromotions(list);
                 setSelectedPromotionId((prev) => {
                     if (!prev) return prev;
-                    return list.some((promotion) => promotion.availablePromotionId === prev) ? prev : null;
+                    return list.some((promotion) => promotion.id === prev) ? prev : null;
                 });
             })
             .catch((error: any) => {
@@ -71,7 +71,7 @@ const BetSlip = () => {
 
     const selectedPromotion = useMemo(() => {
         if (!selectedPromotionId) return null;
-        return promotions.find((promotion) => promotion.availablePromotionId === selectedPromotionId) ?? null;
+        return promotions.find((promotion) => promotion.id === selectedPromotionId) ?? null;
     }, [promotions, selectedPromotionId]);
 
     const effectiveAmount = useMemo(() => {
@@ -201,7 +201,7 @@ const BetSlip = () => {
                 >
                   <option value="">Brak promocji</option>
                   {promotions.map((promotion) => (
-                    <option key={promotion.availablePromotionId} value={promotion.availablePromotionId}>
+                    <option key={promotion.id} value={promotion.id}>
                       {promotion.promotionName}
                     </option>
                   ))}
@@ -267,7 +267,7 @@ const BetSlip = () => {
                 throw new Error('Brak prawidłowych identyfikatorów kursów do wysłania.');
               }
               const amountToSend = Number(effectiveAmount.toFixed(2));
-              await takeBetslip(amountToSend, oddsIds, selectedPromotion?.availablePromotionId);
+              await takeBetslip(amountToSend, oddsIds, selectedPromotion?.id);
               
               // Save success data before clearing selections
               setSuccessData({
@@ -285,6 +285,9 @@ const BetSlip = () => {
                 title: "Kupon złożony!",
                 description: `Twój kupon na ${amountToSend.toFixed(2)} zł został pomyślnie złożony.`,
               });
+              
+              // Refresh balance in navbar
+              window.dispatchEvent(new Event('refreshBalance'));
               
               clearSelections();
             } catch (e: any) {

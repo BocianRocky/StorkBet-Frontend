@@ -48,6 +48,19 @@ const Navbar = () => {
 
     const navigate = useNavigate();
 
+    const refreshMe = useCallback(async () => {
+        if (!isAuthenticated) { setMe(null); return; }
+        setLoadingMe(true);
+        try {
+            const data = await getMe();
+            setMe(data);
+        } catch {
+            setMe(null);
+        } finally {
+            setLoadingMe(false);
+        }
+    }, [isAuthenticated]);
+
     useEffect(() => {
         let active = true;
         async function load() {
@@ -65,6 +78,16 @@ const Navbar = () => {
         load();
         return () => { active = false; };
     }, [isAuthenticated]);
+
+    useEffect(() => {
+        const handleRefreshBalance = () => {
+            refreshMe();
+        };
+        window.addEventListener('refreshBalance', handleRefreshBalance);
+        return () => {
+            window.removeEventListener('refreshBalance', handleRefreshBalance);
+        };
+    }, [refreshMe]);
 
     async function handleLoginSubmit(e: React.FormEvent) {
         e.preventDefault();
