@@ -125,3 +125,39 @@ export async function getBetslipById(id: number): Promise<PlayerBetslipDetails> 
   }
   return res.json();
 }
+
+export interface DepositRequest {
+  amount: number;
+  paymentMethod: number; // 1 for deposit
+}
+
+export interface WithdrawalRequest {
+  amount: number;
+  paymentMethod: number; // 2 for withdrawal
+}
+
+export async function deposit(amount: number, paymentMethod: number = 1): Promise<void> {
+  const res = await fetchWithAuth(`${BASE_URL}/deposit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount, paymentMethod }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return;
+}
+
+export async function withdrawal(amount: number, paymentMethod: number = 2): Promise<void> {
+  const res = await fetchWithAuth(`${BASE_URL}/withdrawal`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount, paymentMethod }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return;
+}
