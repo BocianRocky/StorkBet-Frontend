@@ -45,6 +45,12 @@ export interface GroupedSports {
   sports: GroupedSportItem[];
 }
 
+export interface SportSimpleDto {
+  id: number;
+  title: string;
+  key: string;
+}
+
 import { fetchWithAuth } from './fetchWithAuth';
 export interface ApiMessage { message: string }
 
@@ -249,6 +255,30 @@ class ApiService {
     }
   }
 
+  async syncScoresForSport(sportKey: string, daysFrom: number = 3): Promise<string> {
+    try {
+      const url = `${this.baseUrl}/Odds/sync-scores/${encodeURIComponent(sportKey)}?daysFrom=${daysFrom}`;
+
+      const response = await fetchWithAuth(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        throw new Error(text || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data: ApiMessage = await response.json();
+      return data?.message || 'Synchronizacja wyników zakończona.';
+    } catch (error) {
+      console.error(`Błąd podczas synchronizacji wyników dla sportu ${sportKey}:`, error);
+      throw error;
+    }
+  }
+
   async fetchPromotionsToday(): Promise<import('../types/promotion').PromotionToday[]> {
     try {
       const response = await fetch(`${this.baseUrl}/Promotions/today`, {
@@ -282,6 +312,27 @@ class ApiService {
       return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Błąd podczas pobierania sportów (grouped):', error);
+      throw error;
+    }
+  }
+
+  async fetchSportsSimple(): Promise<SportSimpleDto[]> {
+    try {
+      const response = await fetch(`${this.baseUrl}/Sports`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return Array.isArray(data) ? (data as SportSimpleDto[]) : [];
+    } catch (error) {
+      console.error('Błąd podczas pobierania listy sportów:', error);
       throw error;
     }
   }

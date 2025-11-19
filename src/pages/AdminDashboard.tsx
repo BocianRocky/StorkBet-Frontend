@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { apiService, type AdminWinLossRatio, type AdminBookmakerProfit, type AdminSportCouponsItem, type AdminSportEffectivenessItem, type AdminMonthlyCouponsItem, type AdminPlayerProfitItem, type UncompletedEvent, type UpdateEventResultRequest, type PlayerDetails } from '../services/api';
+import { apiService, type AdminWinLossRatio, type AdminBookmakerProfit, type AdminSportCouponsItem, type AdminSportEffectivenessItem, type AdminMonthlyCouponsItem, type AdminPlayerProfitItem, type UncompletedEvent, type UpdateEventResultRequest, type PlayerDetails, type SportSimpleDto } from '../services/api';
 import {
   ChartContainer,
   ChartTooltip,
@@ -105,28 +105,55 @@ const AdminDashboard: React.FC = () => {
   });
   const [creatingPromotion, setCreatingPromotion] = React.useState<boolean>(false);
 
+  // Sports list state
+  const [sportsList, setSportsList] = React.useState<SportSimpleDto[]>([]);
+  const [sportsLoading, setSportsLoading] = React.useState<boolean>(false);
+
   // Import odds by sportKey (admin) state
   const [sportKey, setSportKey] = React.useState<string>('');
   const [importLoading, setImportLoading] = React.useState<boolean>(false);
   const [importError, setImportError] = React.useState<string | null>(null);
   const [importMessage, setImportMessage] = React.useState<string | null>(null);
 
+  // Sync scores by sportKey (admin) state
+  const [syncSportKey, setSyncSportKey] = React.useState<string>('');
+  const [syncLoading, setSyncLoading] = React.useState<boolean>(false);
+  const [syncError, setSyncError] = React.useState<string | null>(null);
+  const [syncMessage, setSyncMessage] = React.useState<string | null>(null);
+
   const handleImportOdds = async () => {
-    const key = sportKey.trim();
-    if (!key) {
-      setImportError('Podaj sportKey');
+    if (!sportKey) {
+      setImportError('Wybierz sport');
       return;
     }
     setImportLoading(true);
     setImportError(null);
     setImportMessage(null);
     try {
-      const message = await apiService.importOddsForSport(key);
+      const message = await apiService.importOddsForSport(sportKey);
       setImportMessage(message);
     } catch (e: any) {
       setImportError(e?.message || 'Nie udało się zainicjować importu kursów');
     } finally {
       setImportLoading(false);
+    }
+  };
+
+  const handleSyncScores = async () => {
+    if (!syncSportKey) {
+      setSyncError('Wybierz sport');
+      return;
+    }
+    setSyncLoading(true);
+    setSyncError(null);
+    setSyncMessage(null);
+    try {
+      const message = await apiService.syncScoresForSport(syncSportKey, 3);
+      setSyncMessage(message);
+    } catch (e: any) {
+      setSyncError(e?.message || 'Nie udało się zsynchronizować wyników');
+    } finally {
+      setSyncLoading(false);
     }
   };
 
@@ -223,6 +250,18 @@ const AdminDashboard: React.FC = () => {
       }
     }
     loadUncompletedEvents();
+    async function loadSports() {
+      setSportsLoading(true);
+      try {
+        const res = await apiService.fetchSportsSimple();
+        if (mounted) setSportsList(res);
+      } catch (e: any) {
+        console.error('Nie udało się pobrać listy sportów:', e);
+      } finally {
+        if (mounted) setSportsLoading(false);
+      }
+    }
+    loadSports();
     return () => {
       mounted = false;
     };
@@ -698,21 +737,29 @@ const AdminDashboard: React.FC = () => {
         {/* Admin: zainicjuj import kursów po sportKey */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Import kursów według sportKey</CardTitle>
+            <CardTitle>Import kursów według sportu</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
               <div className="md:col-span-2">
-                <Label htmlFor="sportKey">SportKey (np. boxing_boxing, epl_sport)</Label>
-                <Input
+                <Label htmlFor="sportKey">Wybierz sport</Label>
+                <select
                   id="sportKey"
                   value={sportKey}
                   onChange={(e) => setSportKey(e.target.value)}
-                  placeholder="boxing_boxing"
-                />
+                  className="w-full rounded-md border border-cyan-900/40 bg-[#0a1724] text-zinc-100 placeholder:text-cyan-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
+                  disabled={sportsLoading}
+                >
+                  <option value="">-- Wybierz sport --</option>
+                  {sportsList.map((sport) => (
+                    <option key={sport.id} value={sport.key}>
+                      {sport.title}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="flex items-end">
-                <Button className="w-full" onClick={handleImportOdds} disabled={importLoading}>
+                <Button className="w-full" onClick={handleImportOdds} disabled={importLoading || sportsLoading}>
                   {importLoading ? 'Wysyłanie...' : 'Zainicjuj import'}
                 </Button>
               </div>
@@ -720,6 +767,43 @@ const AdminDashboard: React.FC = () => {
 
             {importError && <p className="text-red-600 mb-2">{importError}</p>}
             {importMessage && <p className="text-emerald-600 mb-2">{importMessage}</p>}
+          </CardContent>
+        </Card>
+
+        {/* Admin: synchronizacja wyników po sportKey */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Synchronizacja wyników według sportu</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <div className="md:col-span-2">
+                <Label htmlFor="syncSportKey">Wybierz sport</Label>
+                <select
+                  id="syncSportKey"
+                  value={syncSportKey}
+                  onChange={(e) => setSyncSportKey(e.target.value)}
+                  className="w-full rounded-md border border-cyan-900/40 bg-[#0a1724] text-zinc-100 placeholder:text-cyan-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
+                  disabled={sportsLoading}
+                >
+                  <option value="">-- Wybierz sport --</option>
+                  {sportsList.map((sport) => (
+                    <option key={sport.id} value={sport.key}>
+                      {sport.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-end">
+                <Button className="w-full" onClick={handleSyncScores} disabled={syncLoading || sportsLoading}>
+                  {syncLoading ? 'Synchronizowanie...' : 'Zsynchronizuj wyniki'}
+                </Button>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-2">Synchronizuje wyniki z ostatnich 3 dni</p>
+
+            {syncError && <p className="text-red-600 mb-2">{syncError}</p>}
+            {syncMessage && <p className="text-emerald-600 mb-2">{syncMessage}</p>}
           </CardContent>
         </Card>
       </div>
