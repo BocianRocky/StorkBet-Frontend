@@ -4,9 +4,10 @@ import { useBetSlip } from "@/context/BetSlipContext";
 
 export type SimpleMatchCardProps = {
 	match: OddsData;
+	compact?: boolean;
 };
 
-export default function SimpleMatchCard({ match }: SimpleMatchCardProps) {
+export default function SimpleMatchCard({ match, compact }: SimpleMatchCardProps) {
 	const { addOrToggleSelection, isSelected } = useBetSlip();
 
 	const formatDate = (dateString: string) => {
@@ -36,22 +37,24 @@ export default function SimpleMatchCard({ match }: SimpleMatchCardProps) {
 		return oddId != null ? `odd-${oddId}` : `${match.id}-${choice}`;
 	};
 
+	const isCompact = compact !== undefined ? compact : false;
+	
 	return (
-		<article className="rounded-2xl border border-neutral-600/40 bg-[linear-gradient(180deg,#0a0a0a,#15171c)] p-5 shadow-[0_8px_30px_rgba(189,189,189,0.08)] hover:shadow-[0_12px_40px_rgba(21,94,117,0.14)] transition">
-			<header className="mb-4">
+		<article className={`rounded-2xl border border-neutral-600/40 bg-[linear-gradient(180deg,#0a0a0a,#15171c)] shadow-[0_8px_30px_rgba(189,189,189,0.08)] hover:shadow-[0_12px_40px_rgba(21,94,117,0.14)] transition ${isCompact ? 'p-3 md:p-5' : 'p-5'}`}>
+			<header className={isCompact ? 'mb-2 md:mb-4' : 'mb-4'}>
 				<div className="flex items-center justify-between">
-					<span className="px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-cyan-neutral-950 text-neutral-200 border border-neutral-200/40">
+					<span className={`px-2 py-0.5 rounded-full font-semibold tracking-wide bg-cyan-neutral-950 text-neutral-200 border border-neutral-200/40 ${isCompact ? 'text-[9px] md:text-[10px]' : 'text-[10px]'}`}>
 						{match.league}
 					</span>
-					<span className="text-[11px] text-zinc-400">{formatDate(match.date)}</span>
+					<span className={`text-zinc-400 ${isCompact ? 'text-[10px] md:text-[11px]' : 'text-[11px]'}`}>{formatDate(match.date)}</span>
 				</div>
-				<div className="mt-3 grid grid-cols-[1fr,auto,1fr] items-center gap-2 text-base font-bold text-zinc-100">
+				<div className={`grid grid-cols-[1fr,auto,1fr] items-center gap-2 font-bold text-zinc-100 ${isCompact ? 'mt-2 md:mt-3 text-sm md:text-base' : 'mt-3 text-base'}`}>
 					<span className="text-right truncate">{match.home}</span>
-					<span className="px-2 text-cyan-900">vs</span>
+					<span className={`text-cyan-900 ${isCompact ? 'px-1 md:px-2' : 'px-2'}`}>vs</span>
 					<span className="text-left truncate">{match.away}</span>
 				</div>
 			</header>
-			<div className={`grid gap-3 ${match.odds.draw ? 'grid-cols-3' : 'grid-cols-2'}`}>
+			<div className={`grid ${match.odds.draw ? 'grid-cols-3' : 'grid-cols-2'} ${isCompact ? 'gap-2 md:gap-3' : 'gap-3'}`}>
 				<OddBtn
 					label="1"
 					value={match.odds.home}

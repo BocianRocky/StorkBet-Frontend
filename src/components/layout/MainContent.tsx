@@ -145,9 +145,9 @@ export default function MainContent() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl-grid-cols-3 gap-6 md:[&>*:nth-child(3n)]:xl:col-span-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 lg:gap-6">
             {popularMatches.map((match) => (
-              <SimpleMatchCard key={match.id} match={match} />
+              <SimpleMatchCard key={match.id} match={match} compact={true} />
             ))}
           </div>
         )}
