@@ -34,19 +34,19 @@ const Register: React.FC = () => {
         {error && <div className="text-red-600 text-sm">{error}</div>}
         <div className="space-y-1">
           <label className="block text-sm">Imię</label>
-          <input className="w-full border rounded px-3 py-2" value={name} onChange={(e) => setName(e.target.value)} required />
+          <input className="w-full border rounded px-3 py-2 text-black" value={name} onChange={(e) => setName(e.target.value)} required />
         </div>
         <div className="space-y-1">
           <label className="block text-sm">Nazwisko</label>
-          <input className="w-full border rounded px-3 py-2" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+          <input className="w-full border rounded px-3 py-2 text-black" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
         </div>
         <div className="space-y-1">
           <label className="block text-sm">Email</label>
-          <input className="w-full border rounded px-3 py-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input className="w-full border rounded px-3 py-2 text-black" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </div>
         <div className="space-y-1">
           <label className="block text-sm">Hasło</label>
-          <input className="w-full border rounded px-3 py-2" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input className="w-full border rounded px-3 py-2 text-black" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </div>
         <button disabled={loading} className="w-full bg-green-600 text-white py-2 rounded disabled:opacity-50">
           {loading ? 'Rejestrowanie...' : 'Zarejestruj się'}

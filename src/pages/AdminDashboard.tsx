@@ -830,16 +830,18 @@ const AdminDashboard: React.FC = () => {
                         key={event.eventId}
                         className={`p-4 border rounded-lg cursor-pointer transition-colors ${
                           selectedEvent?.eventId === event.eventId
-                            ? 'border-cyan-500 bg-cyan-50'
-                            : 'border-gray-200 hover:border-gray-300'
+                            ? 'border-cyan-500 bg-cyan-50 text-gray-900'
+                            : 'border-gray-200 hover:border-gray-300 text-gray-900'
                         }`}
                         onClick={() => handleSelectEvent(event)}
                       >
-                        <div className="font-medium">{event.eventName}</div>
-                        <div className="text-sm text-gray-600">
+                        <div className="font-medium">
+                          {event.eventName}
+                        </div>
+                        <div className={`text-sm ${selectedEvent?.eventId === event.eventId ? 'text-gray-700' : 'text-gray-600'}`}>
                           {new Date(event.eventDate).toLocaleString('pl-PL')}
                         </div>
-                        <div className="text-sm text-gray-500 mt-1">
+                        <div className={`text-sm mt-1 ${selectedEvent?.eventId === event.eventId ? 'text-gray-700' : 'text-gray-500'}`}>
                           Kursy: {event.odds.map(odd => `${odd.teamName}: ${odd.oddsValue}`).join(', ')}
                         </div>
                       </div>
@@ -946,21 +948,21 @@ const AdminDashboard: React.FC = () => {
                           key={p.playerId}
                           className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                             selectedPlayer?.playerId === p.playerId
-                              ? 'border-cyan-500 bg-cyan-50'
-                              : 'border-gray-200 hover:border-gray-300'
+                              ? 'border-cyan-500 bg-cyan-50 text-gray-900'
+                              : 'border-gray-200 hover:border-gray-300 text-gray-900'
                           }`}
                           onClick={() => handleSelectPlayer(p)}
                         >
                           <div className="flex justify-between items-center">
                             <div>
                               <div className="font-medium">{p.name} {p.lastName}</div>
-                              <div className="text-sm text-gray-600">ID: {p.playerId}</div>
+                              <div className={`text-sm ${selectedPlayer?.playerId === p.playerId ? 'text-gray-700' : 'text-gray-600'}`}>ID: {p.playerId}</div>
                             </div>
                             <div className="text-right">
                               <div className={`font-medium ${p.profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                                 {p.profit.toFixed(2)} zł
                               </div>
-                              <div className="text-sm text-gray-600">
+                              <div className={`text-sm ${selectedPlayer?.playerId === p.playerId ? 'text-gray-700' : 'text-gray-600'}`}>
                                 Saldo: {p.accountBalance.toFixed(2)} zł
                               </div>
                             </div>

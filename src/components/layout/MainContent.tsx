@@ -119,9 +119,9 @@ export default function MainContent() {
       <ScrollArea className="h-full w-full">
         <PromotionsSlider/>
         <div className="mb-6 mt-12">
-          <h1 className="text-2xl font-bold text-neutral-100 mb-2">Najpopularniejsze mecze</h1>
-          <p className="text-neutral-400">Wybierz sport z menu bocznego, aby zobaczyć więcej opcji</p>
-        </div>
+            <h1 className="text-2xl font-bold text-neutral-100 mb-2">Najpopularniejsze mecze</h1>
+            <p className="text-neutral-400">Wybierz sport z menu bocznego, aby zobaczyć więcej opcji</p>
+          </div>
         
         {popularMatchesLoading ? (
           <div className="flex items-center justify-center py-10">

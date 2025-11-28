@@ -38,7 +38,9 @@ export const SportProvider: React.FC<SportProviderProps> = ({ children }) => {
   const setSelectedSport = (sportKey: string, sportTitle: string) => {
     setSelectedSportKey(sportKey);
     setSelectedSportTitle(sportTitle);
+    setOddsData([]); // Wyczyść stare dane przy zmianie sportu
     setError(null);
+    setLoading(true); // Ustaw loading na true, aby pokazać stan ładowania
   };
 
   const clearSelection = () => {
@@ -46,6 +48,7 @@ export const SportProvider: React.FC<SportProviderProps> = ({ children }) => {
     setSelectedSportTitle(null);
     setOddsData([]);
     setError(null);
+    setLoading(false); // Wyłącz loading przy czyszczeniu wyboru
   };
 
   return (

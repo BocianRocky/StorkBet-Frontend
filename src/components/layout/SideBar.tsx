@@ -8,7 +8,7 @@ import { useApiError } from "@/hooks/useApiError";
 const SideBar = () => {
 	const [groupedSports, setGroupedSports] = useState<GroupedSports[]>([]);
 	const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
-	const { setSelectedSport, setOddsData, setLoading, setError, selectedSport } = useSportContext();
+	const { setSelectedSport, setOddsData, setLoading, setError, selectedSport, clearSelection } = useSportContext();
 	const { handleError } = useApiError();
 	
 	useEffect(() => {
@@ -37,10 +37,8 @@ const SideBar = () => {
 
 	const handleSportClick = async (sport: GroupedSportItem) => {
 		try {
-			setLoading(true);
 			setError(null);
-			
-			// Ustaw wybrany sport w kontekście
+			// Ustaw wybrany sport w kontekście (to już ustawia loading i czyści dane)
 			setSelectedSport(sport.key, sport.title);
 			
 			// Pobierz dane odds dla wybranego sportu
@@ -48,6 +46,8 @@ const SideBar = () => {
 			setOddsData(oddsData);
 		} catch (error) {
 			handleError(error, `Nie udało się pobrać danych dla ${sport.title}`);
+			// Upewnij się, że dane są puste w przypadku błędu
+			setOddsData([]);
 		} finally {
 			setLoading(false);
 		}
@@ -62,9 +62,7 @@ const SideBar = () => {
 							variant="outline"
 							size="sm"
 							onClick={() => {
-								setSelectedSport("", "");
-								setOddsData([]);
-								setError(null);
+								clearSelection();
 							}}
 							className="w-full text-xs bg-neutral-800 hover:bg-neutral-700 border-neutral-600"
 						>
