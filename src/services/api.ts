@@ -28,6 +28,22 @@ export interface OddsData {
   };
 }
 
+export interface PopularEvent {
+  eventId: number;
+  eventName: string;
+  eventDate: string;
+  sportId: number;
+  sportKey: string;
+  sportTitle: string;
+  sportGroup: string;
+  odds: Array<{
+    oddId: number;
+    teamName: string;
+    oddsValue: number;
+  }>;
+  betCount: number;
+}
+
 export interface ApiResponse<T> {
   data: T;
   success: boolean;
@@ -296,6 +312,32 @@ class ApiService {
       return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Błąd podczas pobierania promocji (today):', error);
+      throw error;
+    }
+  }
+
+  async fetchPopularEvents(limit: number = 21, daysAhead?: number): Promise<PopularEvent[]> {
+    try {
+      let url = `${this.baseUrl}/Home/popular-events?limit=${limit}`;
+      if (daysAhead !== undefined) {
+        url += `&daysAhead=${daysAhead}`;
+      }
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return Array.isArray(data) ? (data as PopularEvent[]) : [];
+    } catch (error) {
+      console.error('Błąd podczas pobierania popularnych wydarzeń:', error);
       throw error;
     }
   }

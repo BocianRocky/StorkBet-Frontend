@@ -1,117 +1,90 @@
 import { useSportContext } from "@/context/SportContext";
-import { OddsData } from "@/services/api";
+import { OddsData, apiService, PopularEvent } from "@/services/api";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import SimpleMatchCard from "@/components/match/SimpleMatchCard";
 import PromotionsSlider from "./PromotionsSlider";
+import { useEffect, useState } from "react";
 
-// Przykładowe mecze dla strony głównej
-const sampleMatches: OddsData[] = [
-  {
-    id: "sample-1",
-    home: "Manchester United",
-    away: "Liverpool FC",
-    league: "Premier League",
-    date: "2025-01-15T20:00:00",
+// Funkcja do przekształcenia PopularEvent na OddsData
+const transformPopularEventToOddsData = (event: PopularEvent): OddsData => {
+  // Rozdzielenie eventName na home i away (format: "Team1 vs Team2")
+  const parts = event.eventName.split(" vs ");
+  const home = parts[0]?.trim() || "Unknown";
+  const away = parts[1]?.trim() || "Unknown";
+
+  // Znajdź kursy - dopasuj na podstawie nazwy drużyny
+  const drawOdd = event.odds.find(odd => odd.teamName === "Draw");
+  const homeOdd = event.odds.find(odd => odd.teamName === home);
+  const awayOdd = event.odds.find(odd => odd.teamName === away);
+  
+  // Jeśli nie znaleziono dokładnego dopasowania, użyj pierwszej i drugiej nie-Draw
+  const nonDrawOdds = event.odds.filter(odd => odd.teamName !== "Draw");
+  const fallbackHomeOdd = homeOdd || nonDrawOdds[0];
+  const fallbackAwayOdd = awayOdd || nonDrawOdds[1] || nonDrawOdds[0];
+
+  // Format ligi: sportTitle (sportGroup) - np. "EPL (Soccer)" lub "Boxing"
+  const league = event.sportGroup === event.sportTitle 
+    ? event.sportTitle 
+    : `${event.sportTitle} (${event.sportGroup})`;
+
+  return {
+    id: String(event.eventId),
+    home: home,
+    away: away,
+    league: league,
+    date: event.eventDate,
     odds: {
-      home: 2.10,
-      draw: 3.40,
-      away: 3.20
+      home: fallbackHomeOdd?.oddsValue,
+      draw: drawOdd?.oddsValue,
+      away: fallbackAwayOdd?.oddsValue,
     },
     oddIds: {
-      home: 201,
-      draw: 202,
-      away: 203
-    }
-  },
-  {
-    id: "sample-2", 
-    home: "FC Barcelona",
-    away: "Real Madrid",
-    league: "La Liga",
-    date: "2025-01-16T21:00:00",
-    odds: {
-      home: 1.95,
-      draw: 3.60,
-      away: 3.80
+      home: fallbackHomeOdd?.oddId,
+      draw: drawOdd?.oddId,
+      away: fallbackAwayOdd?.oddId,
     },
-    oddIds: {
-      home: 201,
-      draw: 202,
-      away: 203
-    }
-  },
-  {
-    id: "sample-3",
-    home: "Bayern Munich",
-    away: "Borussia Dortmund",
-    league: "Bundesliga",
-    date: "2025-01-17T18:30:00",
-    odds: {
-      home: 1.75,
-      draw: 3.80,
-      away: 4.50
-    },
-    oddIds: {
-      home: 201,
-      draw: 202,
-      away: 203
-    }
-  },
-  {
-    id: "sample-4",
-    home: "PSG",
-    away: "Marseille",
-    league: "Ligue 1",
-    date: "2025-01-18T20:45:00",
-    odds: {
-      home: 1.60,
-      draw: 4.20,
-      away: 5.50
-    },
-    oddIds: {
-      home: 201,
-      draw: 202,
-      away: 203
-    }
-  },
-  {
-    id: "sample-5",
-    home: "Juventus",
-    away: "AC Milan",
-    league: "Serie A",
-    date: "2025-01-19T19:30:00",
-    odds: {
-      home: 2.30,
-      draw: 3.20,
-      away: 3.10
-    },
-    oddIds: {
-      home: 201,
-      draw: 202,
-      away: 203
-    }
-  },
-  {
-    id: "sample-6",
-    home: "Arsenal",
-    away: "Chelsea",
-    league: "Premier League",
-    date: "2025-01-20T17:00:00",
-    odds: {
-      home: 2.00,
-      draw: 3.50,
-      away: 3.60
-    },
-    oddIds: {
-      home: 201,
-      draw: 202,
-      away: 203
-    }
-  }
-];
+  };
+};
 
 export default function MainContent() {
   const { selectedSport, selectedSportTitle, oddsData, isLoading, error } = useSportContext();
+  const [popularMatches, setPopularMatches] = useState<OddsData[]>([]);
+  const [popularMatchesLoading, setPopularMatchesLoading] = useState<boolean>(false);
+  const [popularMatchesError, setPopularMatchesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedSport) {
+      // Pobierz popularne mecze tylko gdy nie wybrano sportu (strona główna)
+      let mounted = true;
+      setPopularMatchesLoading(true);
+      setPopularMatchesError(null);
+      
+      apiService
+        .fetchPopularEvents(21)
+        .then((events) => {
+          if (mounted) {
+            const transformed = events.map(transformPopularEventToOddsData);
+            setPopularMatches(transformed);
+            setPopularMatchesError(null);
+          }
+        })
+        .catch((e: unknown) => {
+          if (mounted) {
+            setPopularMatchesError(e instanceof Error ? e.message : "Nieznany błąd");
+            setPopularMatches([]);
+          }
+        })
+        .finally(() => {
+          if (mounted) {
+            setPopularMatchesLoading(false);
+          }
+        });
+
+      return () => {
+        mounted = false;
+      };
+    }
+  }, [selectedSport]);
 
   if (error) {
     return (
@@ -144,18 +117,40 @@ export default function MainContent() {
     // Strona główna
     return (
       <ScrollArea className="h-full w-full">
-
         <PromotionsSlider/>
         <div className="mb-6 mt-12">
-            <h1 className="text-2xl font-bold text-neutral-100 mb-2">Najpopularniejsze mecze</h1>
-            <p className="text-neutral-400">Wybierz sport z menu bocznego, aby zobaczyć więcej opcji</p>
+          <h1 className="text-2xl font-bold text-neutral-100 mb-2">Najpopularniejsze mecze</h1>
+          <p className="text-neutral-400">Wybierz sport z menu bocznego, aby zobaczyć więcej opcji</p>
+        </div>
+        
+        {popularMatchesLoading ? (
+          <div className="flex items-center justify-center py-10">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
+              <p className="text-neutral-300 text-lg">Ładowanie popularnych meczów...</p>
+            </div>
           </div>
+        ) : popularMatchesError ? (
+          <div className="flex items-center justify-center py-10">
+            <div className="text-center">
+              <div className="text-red-400 text-xl mb-2">⚠️</div>
+              <p className="text-red-400 text-lg font-semibold">Błąd podczas pobierania meczów</p>
+              <p className="text-neutral-400 mt-2">{popularMatchesError}</p>
+            </div>
+          </div>
+        ) : popularMatches.length === 0 ? (
+          <div className="flex items-center justify-center py-10">
+            <div className="text-center">
+              <p className="text-neutral-400">Brak dostępnych meczów</p>
+            </div>
+          </div>
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl-grid-cols-3 gap-6 md:[&>*:nth-child(3n)]:xl:col-span-1">
-            {sampleMatches.map((match) => (
+            {popularMatches.map((match) => (
               <SimpleMatchCard key={match.id} match={match} />
             ))}
           </div>
-        
+        )}
       </ScrollArea>
     );
   }
