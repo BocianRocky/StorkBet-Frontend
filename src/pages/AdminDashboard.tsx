@@ -698,10 +698,10 @@ const AdminDashboard: React.FC = () => {
                       })
                       .map((p) => (
                         <tr key={p.playerId} className="border-t border-cyan-900/20">
-                          <td className="py-2 pr-4 text-gray-800">{p.playerId}</td>
-                          <td className="py-2 pr-4 text-gray-800">{p.name}</td>
-                          <td className="py-2 pr-4 text-gray-800">{p.lastName}</td>
-                          <td className="py-2 pr-4 text-gray-800">{p.accountBalance.toFixed(2)}</td>
+                          <td className="py-2 pr-4 text-gray-300">{p.playerId}</td>
+                          <td className="py-2 pr-4 text-gray-300">{p.name}</td>
+                          <td className="py-2 pr-4 text-gray-300">{p.lastName}</td>
+                          <td className="py-2 pr-4 text-gray-300">{p.accountBalance.toFixed(2)}</td>
                           <td className={`py-2 pr-4 font-medium ${p.profit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{p.profit.toFixed(2)}</td>
                         </tr>
                       ))}
@@ -830,8 +830,8 @@ const AdminDashboard: React.FC = () => {
                         key={event.eventId}
                         className={`p-4 border rounded-lg cursor-pointer transition-colors ${
                           selectedEvent?.eventId === event.eventId
-                            ? 'border-cyan-500 bg-cyan-50 text-gray-900'
-                            : 'border-gray-200 hover:border-gray-300 text-gray-900'
+                            ? 'border-cyan-500 bg-cyan-50 text-gray-800'
+                            : 'border-gray-200 hover:border-gray-300 text-gray-300'
                         }`}
                         onClick={() => handleSelectEvent(event)}
                       >
@@ -949,7 +949,7 @@ const AdminDashboard: React.FC = () => {
                           className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                             selectedPlayer?.playerId === p.playerId
                               ? 'border-cyan-500 bg-cyan-50 text-gray-900'
-                              : 'border-gray-200 hover:border-gray-300 text-gray-900'
+                              : 'border-gray-200 hover:border-gray-300 text-gray-300'
                           }`}
                           onClick={() => handleSelectPlayer(p)}
                         >
