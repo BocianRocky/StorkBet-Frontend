@@ -91,4 +91,20 @@ export async function deletePromotion(id: number): Promise<void> {
   }
 }
 
+export interface RedeemPromotionRequest {
+  Code: string
+}
+
+export async function redeemPromotion(code: string): Promise<void> {
+  const res = await fetchWithAuth('/api/Promotions/redeem', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ Code: code } as RedeemPromotionRequest),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(text || `HTTP ${res.status}`)
+  }
+}
+
 
