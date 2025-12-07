@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiService, type AdminWinLossRatio, type AdminBookmakerProfit, type AdminSportCouponsItem, type AdminSportEffectivenessItem, type AdminMonthlyCouponsItem, type AdminPlayerProfitItem, type UncompletedEvent, type UpdateEventResultRequest, type PlayerDetails, type SportSimpleDto } from '../services/api';
+import { getAllPromotions, updatePromotion, deletePromotion, type PromotionAvailable, type UpdatePromotionRequest } from '../services/promotions';
 import {
   ChartContainer,
   ChartTooltip,
@@ -104,6 +105,12 @@ const AdminDashboard: React.FC = () => {
     imageFile: null,
   });
   const [creatingPromotion, setCreatingPromotion] = React.useState<boolean>(false);
+  const [promotionsList, setPromotionsList] = React.useState<PromotionAvailable[]>([]);
+  const [promotionsLoading, setPromotionsLoading] = React.useState<boolean>(false);
+  const [promotionsError, setPromotionsError] = React.useState<string | null>(null);
+  const [editingPromotion, setEditingPromotion] = React.useState<PromotionAvailable | null>(null);
+  const [updatingPromotion, setUpdatingPromotion] = React.useState<boolean>(false);
+  const [deletingPromotionId, setDeletingPromotionId] = React.useState<number | null>(null);
 
   // Sports list state
   const [sportsList, setSportsList] = React.useState<SportSimpleDto[]>([]);
@@ -404,6 +411,23 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const loadPromotions = React.useCallback(async () => {
+    setPromotionsLoading(true);
+    setPromotionsError(null);
+    try {
+      const data = await getAllPromotions();
+      setPromotionsList(data);
+    } catch (error: any) {
+      setPromotionsError(error?.message || 'Nie udało się pobrać promocji');
+    } finally {
+      setPromotionsLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadPromotions();
+  }, [loadPromotions]);
+
   const handleCreatePromotion = async () => {
     if (!promotionForm.imageFile) {
       alert('Proszę wybrać obraz promocji');
@@ -441,10 +465,65 @@ const AdminDashboard: React.FC = () => {
       });
       
       alert('Promocja została utworzona pomyślnie!');
+      await loadPromotions();
     } catch (error: any) {
       alert(error?.message || 'Nie udało się utworzyć promocji');
     } finally {
       setCreatingPromotion(false);
+    }
+  };
+
+  const handleEditPromotion = (promotion: PromotionAvailable) => {
+    setEditingPromotion(promotion);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingPromotion(null);
+  };
+
+  const handleUpdatePromotion = async () => {
+    if (!editingPromotion) return;
+
+    setUpdatingPromotion(true);
+    try {
+      const updateData: UpdatePromotionRequest = {
+        promotionName: editingPromotion.promotionName,
+        dateStart: editingPromotion.dateStart,
+        dateEnd: editingPromotion.dateEnd,
+        bonusType: editingPromotion.bonusType,
+        bonusValue: editingPromotion.bonusValue,
+        promoCode: editingPromotion.promoCode || '',
+        minDeposit: editingPromotion.minDeposit || 0,
+        maxDeposit: editingPromotion.maxDeposit || 0,
+        image: editingPromotion.image,
+        description: editingPromotion.description,
+      };
+
+      await updatePromotion(editingPromotion.id, updateData);
+      alert('Promocja została zaktualizowana pomyślnie!');
+      setEditingPromotion(null);
+      await loadPromotions();
+    } catch (error: any) {
+      alert(error?.message || 'Nie udało się zaktualizować promocji');
+    } finally {
+      setUpdatingPromotion(false);
+    }
+  };
+
+  const handleDeletePromotion = async (id: number) => {
+    if (!confirm('Czy na pewno chcesz usunąć tę promocję?')) {
+      return;
+    }
+
+    setDeletingPromotionId(id);
+    try {
+      await deletePromotion(id);
+      alert('Promocja została usunięta pomyślnie!');
+      await loadPromotions();
+    } catch (error: any) {
+      alert(error?.message || 'Nie udało się usunąć promocji');
+    } finally {
+      setDeletingPromotionId(null);
     }
   };
 
@@ -1146,7 +1225,179 @@ const AdminDashboard: React.FC = () => {
         </TabsContent>
         
         <TabsContent value="promotions" className="mt-6">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-6xl mx-auto space-y-6">
+            {/* Lista promocji */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Lista promocji</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {promotionsLoading ? (
+                  <div className="text-center py-4">Ładowanie promocji...</div>
+                ) : promotionsError ? (
+                  <div className="text-red-500 py-4">{promotionsError}</div>
+                ) : promotionsList.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500">Brak promocji</div>
+                ) : (
+                  <div className="space-y-3">
+                    {promotionsList.map((promotion) => (
+                      <div
+                        key={promotion.id}
+                        className="flex items-center justify-between p-4 border border-neutral-700 rounded-lg bg-neutral-900"
+                      >
+                        <div className="flex-1">
+                          <div className="font-semibold text-white">{promotion.promotionName}</div>
+                          <div className="text-sm text-gray-400 mt-1">
+                            {new Date(promotion.dateStart).toLocaleDateString('pl-PL')} - {new Date(promotion.dateEnd).toLocaleDateString('pl-PL')}
+                          </div>
+                          <div className="text-sm text-gray-400">
+                            {promotion.bonusType} {promotion.bonusValue}% | Kod: {promotion.promoCode || 'Brak'}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditPromotion(promotion)}
+                            disabled={deletingPromotionId === promotion.id}
+                          >
+                            Edytuj
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeletePromotion(promotion.id)}
+                            disabled={deletingPromotionId === promotion.id}
+                          >
+                            {deletingPromotionId === promotion.id ? 'Usuwanie...' : 'Usuń'}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Formularz edycji */}
+            {editingPromotion && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Edytuj promocję #{editingPromotion.id}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="editPromotionName">Nazwa promocji *</Label>
+                        <Input
+                          id="editPromotionName"
+                          value={editingPromotion.promotionName}
+                          onChange={(e) => setEditingPromotion({ ...editingPromotion, promotionName: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="editBonusType">Typ bonusu *</Label>
+                        <Input
+                          id="editBonusType"
+                          value={editingPromotion.bonusType}
+                          onChange={(e) => setEditingPromotion({ ...editingPromotion, bonusType: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="editDateStart">Data rozpoczęcia *</Label>
+                        <Input
+                          id="editDateStart"
+                          type="date"
+                          value={editingPromotion.dateStart.split('T')[0]}
+                          onChange={(e) => setEditingPromotion({ ...editingPromotion, dateStart: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="editDateEnd">Data zakończenia *</Label>
+                        <Input
+                          id="editDateEnd"
+                          type="date"
+                          value={editingPromotion.dateEnd.split('T')[0]}
+                          onChange={(e) => setEditingPromotion({ ...editingPromotion, dateEnd: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="editBonusValue">Wartość bonusu (%)</Label>
+                        <Input
+                          id="editBonusValue"
+                          type="number"
+                          value={editingPromotion.bonusValue}
+                          onChange={(e) => setEditingPromotion({ ...editingPromotion, bonusValue: parseFloat(e.target.value) || 0 })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="editMinDeposit">Min. depozyt</Label>
+                        <Input
+                          id="editMinDeposit"
+                          type="number"
+                          value={editingPromotion.minDeposit || 0}
+                          onChange={(e) => setEditingPromotion({ ...editingPromotion, minDeposit: parseFloat(e.target.value) || 0 })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="editMaxDeposit">Maks. depozyt</Label>
+                        <Input
+                          id="editMaxDeposit"
+                          type="number"
+                          value={editingPromotion.maxDeposit || 0}
+                          onChange={(e) => setEditingPromotion({ ...editingPromotion, maxDeposit: parseFloat(e.target.value) || 0 })}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="editPromoCode">Kod promocyjny</Label>
+                      <Input
+                        id="editPromoCode"
+                        value={editingPromotion.promoCode || ''}
+                        onChange={(e) => setEditingPromotion({ ...editingPromotion, promoCode: e.target.value })}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="editDescription">Opis</Label>
+                      <textarea
+                        id="editDescription"
+                        className="w-full rounded-md border border-cyan-900/40 bg-[#0a1724] text-zinc-100 placeholder:text-cyan-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
+                        rows={3}
+                        value={editingPromotion.description}
+                        onChange={(e) => setEditingPromotion({ ...editingPromotion, description: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        onClick={handleCancelEdit}
+                        disabled={updatingPromotion}
+                      >
+                        Anuluj
+                      </Button>
+                      <Button
+                        onClick={handleUpdatePromotion}
+                        disabled={updatingPromotion}
+                      >
+                        {updatingPromotion ? 'Zapisywanie...' : 'Zapisz zmiany'}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Formularz tworzenia */}
             <Card>
               <CardHeader>
                 <CardTitle>Dodaj nową promocję</CardTitle>

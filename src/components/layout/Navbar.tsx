@@ -186,7 +186,6 @@ const Navbar = () => {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onSelect={() => navigate('/profile')} className='cursor-pointer'>Profil</DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => navigate('/my-bets')} className='cursor-pointer'>Moje zakłady</DropdownMenuItem>
-                            <DropdownMenuItem className='cursor-pointer'>Ustawienia</DropdownMenuItem>
                             <DropdownMenuItem onClick={logout} className='cursor-pointer'>Wyloguj się</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
