@@ -98,9 +98,18 @@ const BetSlip = () => {
     }, [amount, combinedOdds, selections.length]);
 
     const potentialWin = useMemo(() => {
-        if (!effectiveAmount || selections.length === 0) return 0;
-        return effectiveAmount * (combinedOdds || 1);
-    }, [effectiveAmount, combinedOdds, selections.length]);
+        if (!amount || selections.length === 0) return 0;
+        const baseWin = basePotentialWin;
+        
+        
+        if (selectedPromotion && baseWin > 0) {
+            const bonusValue = selectedPromotion.bonusValue ?? 0;
+            
+            return baseWin * (1 + bonusValue / 100);
+        }
+        
+        return baseWin;
+    }, [amount, basePotentialWin, selectedPromotion, selections.length]);
 
     return (
       <div className="h-full w-full p-4">
