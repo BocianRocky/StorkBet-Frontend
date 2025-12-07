@@ -245,10 +245,21 @@ const BetSlip = () => {
           )}
         </div>
 
+        {!isAuthenticated && selections.length > 0 && (
+          <div className="w-full mt-4 p-3 rounded-md bg-amber-900/30 border border-amber-700/50">
+            <p className="text-sm text-amber-200 text-center">
+              Musisz być zalogowany, aby móc obstawić zakład.
+            </p>
+          </div>
+        )}
         <Button
           className="w-full h-12 mt-4 font-bold bg-slate-700 hover:bg-zinc-600 text-white disabled:opacity-60"
-          disabled={selections.length === 0 || amount <= 0 || submitting}
+          disabled={selections.length === 0 || amount <= 0 || submitting || !isAuthenticated}
           onClick={async () => {
+            if (!isAuthenticated) {
+              setSubmitError('Musisz być zalogowany, aby móc obstawić zakład.');
+              return;
+            }
             setSubmitError(null);
             setSubmitSuccess(null);
             try {
