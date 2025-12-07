@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import { apiService } from "@/services/api";
 import type { PromotionToday } from "@/types/promotion";
 
@@ -14,6 +17,7 @@ const formatDate = (iso: string) => {
 };
 
 const Promotions = () => {
+    const navigate = useNavigate();
     const [promotions, setPromotions] = useState<PromotionToday[]>([]);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string | null>(null);
@@ -58,7 +62,17 @@ const Promotions = () => {
 
 	return (
 		<div className="w-full max-w-7xl mx-auto px-4">
-			<h1 className="text-4xl font-semibold mb-8 mt-6">Promocje</h1>
+			<div className="mb-4 mt-6">
+				<Button
+					variant="outline"
+					onClick={() => navigate('/')}
+					className="mb-4"
+				>
+					<ArrowLeft className="mr-2 h-4 w-4" />
+					Powrót do strony głównej
+				</Button>
+			</div>
+			<h1 className="text-4xl font-semibold mb-8">Promocje</h1>
 			<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 justify-items-center">
 				{promotions.map((p) => {
 					const imgSrc = p.image.startsWith('http') ? p.image : `${import.meta.env.VITE_API_BASE_URL || ''}${p.image}`;

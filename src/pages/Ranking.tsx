@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import { fetchRanking, type RankingPlayer } from "@/services/player";
 
 const Ranking = () => {
+    const navigate = useNavigate();
     const [ranking, setRanking] = useState<RankingPlayer[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -46,7 +50,17 @@ const Ranking = () => {
 
     return (
         <div className="w-full max-w-7xl mx-auto px-4">
-            <h1 className="text-4xl font-semibold mb-8 mt-6 text-white">Ranking Graczy</h1>
+            <div className="mb-4 mt-6">
+                <Button
+                    variant="outline"
+                    onClick={() => navigate('/')}
+                    className="mb-4"
+                >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Powrót do strony głównej
+                </Button>
+            </div>
+            <h1 className="text-4xl font-semibold mb-8 text-white">Ranking Graczy</h1>
             <Card className="bg-neutral-950 border-neutral-800">
                 <CardHeader>
                     <CardTitle className="text-2xl text-white">Top 30 Graczy</CardTitle>

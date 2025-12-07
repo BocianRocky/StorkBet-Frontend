@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getBetslipById, type PlayerBetslipDetails } from '../services/player';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Separator } from '../components/ui/separator';
+import { Button } from '../components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 const MyBetDetails: React.FC = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [details, setDetails] = useState<PlayerBetslipDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +67,16 @@ const MyBetDetails: React.FC = () => {
 
   return (
     <div className="p-4 max-w-4xl mx-auto w-full mt-6">
+      <div className="mb-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/my-bets')}
+          className="mb-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Powrót do moich zakładów
+        </Button>
+      </div>
       <h1 className="text-4xl font-semibold mb-8">Szczegóły kuponu #{details.id}</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">

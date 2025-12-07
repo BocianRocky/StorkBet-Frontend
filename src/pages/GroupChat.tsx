@@ -166,12 +166,12 @@ const GroupChat: React.FC = () => {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="mb-4">
         <Button
-          variant="ghost"
+          variant="outline"
           onClick={() => navigate('/')}
           className="mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Powrót
+          Powrót do strony głównej
         </Button>
       </div>
 

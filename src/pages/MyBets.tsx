@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { getMyBetslips, type PlayerBetslipSummary } from '../services/player';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Separator } from '../components/ui/separator';
+import { Button } from '../components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 const MyBets: React.FC = () => {
   const navigate = useNavigate();
@@ -67,6 +69,16 @@ const MyBets: React.FC = () => {
 
   return (
     <div className="p-4 max-w-4xl mx-auto w-full mt-6">
+      <div className="mb-4">
+        <Button
+          variant="outline"
+          onClick={() => navigate('/profile')}
+          className="mb-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Powrót do mojego profilu
+        </Button>
+      </div>
       <h1 className="text-4xl font-semibold mb-8">Moje kupony</h1>
 
       <div className="space-y-3">
@@ -75,7 +87,7 @@ const MyBets: React.FC = () => {
           const formatted = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
           const wynik = mapWynikLabel(bet.wynik);
           return (
-            <Card key={bet.id} className='cursor-pointer ' onClick={() => navigate(`/my-bets/${bet.id}`)}>
+            <Card key={bet.id} className='cursor-pointer hover:border-white hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all' onClick={() => navigate(`/my-bets/${bet.id}`)}>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between w-full">
                   <span>Kupon #{bet.id}</span>
