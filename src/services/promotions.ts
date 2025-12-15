@@ -35,9 +35,9 @@ export interface UpdatePromotionRequest {
   dateEnd: string
   bonusType: string
   bonusValue: number
-  promoCode: string
-  minDeposit: number
-  maxDeposit: number
+  promoCode: string | null
+  minDeposit: number | null
+  maxDeposit: number | null
   image: string
   description: string
 }
@@ -56,7 +56,7 @@ export async function getMyPromotions(): Promise<PromotionForUser[]> {
 }
 
 export async function getAllPromotions(): Promise<PromotionAvailable[]> {
-  const res = await fetch('/api/promotions/available', {
+  const res = await fetchWithAuth('/api/Promotions', {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   })
@@ -69,7 +69,7 @@ export async function getAllPromotions(): Promise<PromotionAvailable[]> {
 }
 
 export async function updatePromotion(id: number, data: UpdatePromotionRequest): Promise<void> {
-  const res = await fetchWithAuth(`/api/promotions/${id}`, {
+  const res = await fetchWithAuth(`/api/Promotions/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -84,22 +84,6 @@ export async function deletePromotion(id: number): Promise<void> {
   const res = await fetchWithAuth(`/api/Promotions/${id}`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
-  })
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(text || `HTTP ${res.status}`)
-  }
-}
-
-export interface RedeemPromotionRequest {
-  Code: string
-}
-
-export async function redeemPromotion(code: string): Promise<void> {
-  const res = await fetchWithAuth('/api/Promotions/redeem', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ Code: code } as RedeemPromotionRequest),
   })
   if (!res.ok) {
     const text = await res.text()

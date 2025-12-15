@@ -1,9 +1,8 @@
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
 import './App.css'
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import ProtectedRoute from './components/ProtectedRoute'
-import PublicRoute from './components/PublicRoute'
 import Home from './pages/Home'
 import Promotions from './pages/Promotions'
 import { SportProvider } from './context/SportContext'
@@ -20,26 +19,25 @@ import AdminDashboard from "./pages/AdminDashboard";
 import GroupChat from "./pages/GroupChat";
 import Ranking from "./pages/Ranking";
 import { Toaster } from "./components/ui/toaster";
+import BetSlipZone from "./pages/BetSlipZone";
+import BetSlipZoneDetails from "./pages/BetSlipZoneDetails";
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+  const isAdminDashboard = location.pathname === '/admin/dashboard';
   
   return (
-    <AuthProvider>
-      <SportProvider>
-        <BetSlipProvider>
-          <Router>
-            <Navbar />
-            <Routes>
+    <>
+      {!isAdminDashboard && <Navbar />}
+      <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              {/* Public routes - dostępne tylko dla niezalogowanych lub graczy (admini są przekierowywani) */}
-              <Route element={<PublicRoute />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/promotions" element={<Promotions />} />
-                <Route path="/ranking" element={<Ranking />} />
-                <Route path="/legal" element={<Legal />} />
-                <Route path="/contact" element={<Contact />} />
-              </Route>
+              {/* Public routes */}
+              <Route path="/" element={<Home />} />
+              <Route path="/promotions" element={<Promotions />} />
+              <Route path="/ranking" element={<Ranking />} />
+              <Route path="/betslip-zone" element={<BetSlipZone />} />
+              <Route path="/betslip-zone/:postId" element={<BetSlipZoneDetails />} />
               <Route element={<ProtectedRoute requiredRoleId={2} />}>
                 <Route path="/my-bets" element={<MyBets />} />
                 <Route path="/my-bets/:id" element={<MyBetDetails />} />
@@ -49,10 +47,24 @@ function App() {
               <Route element={<ProtectedRoute requiredRoleId={1} />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
               </Route>
+              <Route path="/legal" element={<Legal />} />
+              <Route path="/contact" element={<Contact />} />
               <Route path="*" element={<div>404 Not Found</div>} />
-            </Routes>
-            <Footer />
-            <Toaster />
+      </Routes>
+      {!isAdminDashboard && <Footer />}
+      <Toaster />
+    </>
+  );
+}
+
+function App() {
+  
+  return (
+    <AuthProvider>
+      <SportProvider>
+        <BetSlipProvider>
+          <Router>
+            <AppContent />
           </Router>
         </BetSlipProvider>
       </SportProvider>

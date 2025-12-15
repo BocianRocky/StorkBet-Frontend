@@ -4,7 +4,9 @@ import { getBetslipById, type PlayerBetslipDetails } from '../services/player';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Separator } from '../components/ui/separator';
 import { Button } from '../components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Share2, Loader2 } from 'lucide-react';
+import { createBetSlipZonePost } from '../services/betslipZone';
+import { useToast } from '../hooks/use-toast';
 
 const MyBetDetails: React.FC = () => {
   const { id } = useParams();
@@ -12,6 +14,9 @@ const MyBetDetails: React.FC = () => {
   const [details, setDetails] = useState<PlayerBetslipDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [sharing, setSharing] = useState<boolean>(false);
+
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!id) return;
@@ -35,6 +40,29 @@ const MyBetDetails: React.FC = () => {
       mounted = false;
     };
   }, [id]);
+
+  const handleShareToZoneClick = async () => {
+    if (!details) return;
+    setSharing(true);
+    try {
+      const post = await createBetSlipZonePost(details.id);
+      toast({
+        title: 'Kupon udostępniony',
+        description: `Twój kupon został udostępniony w Strefie Kuponów jako post #${post.postId}.`,
+      });
+      navigate(`/betslip-zone/${post.postId}`);
+    } catch (e: unknown) {
+      const message =
+        e instanceof Error ? e.message : 'Nie udało się udostępnić kuponu. Spróbuj ponownie.';
+      toast({
+        title: 'Nie udało się udostępnić kuponu',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSharing(false);
+    }
+  };
 
   if (loading) return <div className="p-4">Ładowanie…</div>;
   if (error) return <div className="p-4 text-red-600">{error}</div>;
@@ -65,9 +93,13 @@ const MyBetDetails: React.FC = () => {
     return { text: String(value), className: 'text-gray-800' };
   };
 
+  const isBetInProgress = (wynik: unknown): boolean => {
+    return wynik === null || wynik === undefined || wynik === 0;
+  };
+
   return (
     <div className="p-4 max-w-4xl mx-auto w-full mt-6">
-      <div className="mb-4">
+      <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
         <Button
           variant="ghost"
           onClick={() => navigate('/my-bets')}
@@ -76,6 +108,27 @@ const MyBetDetails: React.FC = () => {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Powrót do moich zakładów
         </Button>
+        {isBetInProgress(details.wynik) && (
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={sharing}
+            onClick={handleShareToZoneClick}
+            className="flex items-center gap-2"
+          >
+            {sharing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Udostępnianie…
+              </>
+            ) : (
+              <>
+                <Share2 className="h-4 w-4" />
+                Udostępnij w Strefie Kuponów
+              </>
+            )}
+          </Button>
+        )}
       </div>
       <h1 className="text-4xl font-semibold mb-8">Szczegóły kuponu #{details.id}</h1>
 

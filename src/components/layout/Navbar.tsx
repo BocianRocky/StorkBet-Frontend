@@ -14,11 +14,7 @@ import {
     SheetTitle,
     SheetTrigger,
   } from "@/components/ui/sheet"
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { User } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,7 +27,7 @@ import { getMe, type PlayerMeResponse } from '../../services/player'
 import { apiService, type TyperGroup } from '../../services/api'
 import { Input } from '@/components/ui/input'
 const Navbar = () => {
-    const { isAuthenticated, logout, login, user } = useAuth();
+    const { isAuthenticated, logout, login } = useAuth();
     const [me, setMe] = useState<PlayerMeResponse | null>(null);
     const [loadingMe, setLoadingMe] = useState(false);
     const [loginOpen, setLoginOpen] = useState(false);
@@ -94,10 +90,14 @@ const Navbar = () => {
         setLoginError(null);
         setLoginLoading(true);
         try {
-            await login({ email: loginEmail, password: loginPassword });
+            const user = await login({ email: loginEmail, password: loginPassword });
             setLoginOpen(false);
             setLoginEmail('');
             setLoginPassword('');
+            // Przekieruj administratora do panelu, gracza pozostaw na obecnej stronie
+            if (user.roleId === 1) {
+                navigate('/admin/dashboard');
+            }
         } catch (err: any) {
             setLoginError(err?.message || 'Błąd logowania');
         } finally {
@@ -157,16 +157,13 @@ const Navbar = () => {
             <div className="flex-1 min-w-0">
                 <img src={logo} alt="logo" className="h-10" />
             </div>
-            {/* Ukryj nawigację dla admina - admin widzi tylko panel administratora */}
-            {user?.roleId !== 1 && (
-                <div className='absolute left-1/2 transform -translate-x-1/2 flex space-x-4'>
-                    <Link to="/"><Button variant="ghost" className="text-sm px-2 py-1 font-bold">ZAKŁADY BUKMACHERSKIE</Button></Link>
-                    <Link to="/promotions"><Button variant="ghost" className="text-sm px-2 py-1 font-bold">PROMOCJE</Button></Link>
-                    <Button variant="ghost" className="text-sm px-2 py-1 font-bold" onClick={handleTyperZoneClick}>STREFA TYPERÓW</Button>
-                    <Button variant="ghost" className="text-sm px-2 py-1 font-bold">STREFA KUPONÓW</Button>
-                    <Link to="/ranking"><Button variant="ghost" className="text-sm px-2 py-1 font-bold">RANKING</Button></Link>
-                </div>
-            )}
+            <div className='absolute left-1/2 transform -translate-x-1/2 flex space-x-4'>
+                <Link to="/"><Button variant="ghost" className="text-sm px-2 py-1 font-bold">ZAKŁADY BUKMACHERSKIE</Button></Link>
+                <Link to="/promotions"><Button variant="ghost" className="text-sm px-2 py-1 font-bold">PROMOCJE</Button></Link>
+                <Button variant="ghost" className="text-sm px-2 py-1 font-bold" onClick={handleTyperZoneClick}>STREFA TYPERÓW</Button>
+                <Link to="/betslip-zone"><Button variant="ghost" className="text-sm px-2 py-1 font-bold">STREFA KUPONÓW</Button></Link>
+                <Link to="/ranking"><Button variant="ghost" className="text-sm px-2 py-1 font-bold">RANKING</Button></Link>
+            </div>
 
         <div className="flex-1 flex justify-end space-x-4 min-w-0">
             {isAuthenticated ? (
@@ -177,11 +174,8 @@ const Navbar = () => {
                     </div>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="outline-none">
-                                <Avatar className="cursor-pointer">
-                                    <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                                    <AvatarFallback>CN</AvatarFallback>
-                                </Avatar>
+                            <button className="outline-none rounded-full p-2 hover:bg-zinc-800 transition-colors">
+                                <User className="h-6 w-6 text-white cursor-pointer" />
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-56">

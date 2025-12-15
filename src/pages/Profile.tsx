@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getProfile, type PlayerProfileResponse, deposit, withdrawal } from '../services/player';
-import { getMyPromotions, redeemPromotion, type PromotionForUser } from '../services/promotions';
+import { getMyPromotions, type PromotionForUser } from '../services/promotions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
@@ -22,12 +22,6 @@ const Profile = () => {
     const [withdrawing, setWithdrawing] = useState(false);
     const [depositError, setDepositError] = useState<string | null>(null);
     const [withdrawalError, setWithdrawalError] = useState<string | null>(null);
-    
-    // Promotion redemption state
-    const [promoCode, setPromoCode] = useState<string>('');
-    const [redeeming, setRedeeming] = useState(false);
-    const [redeemError, setRedeemError] = useState<string | null>(null);
-    
     const { toast } = useToast();
 
     useEffect(() => {
@@ -48,21 +42,11 @@ const Profile = () => {
         return () => { active = false; };
     }, []);
 
-    const loadPromotions = async () => {
-        try {
-            const list = await getMyPromotions();
-            setPromos(list);
-            setPromosError(null);
-        } catch (e: unknown) {
-            setPromosError(e instanceof Error ? e.message : 'Błąd pobierania promocji');
-        }
-    };
-
     useEffect(() => {
         let mounted = true;
-        loadPromotions().then(() => {
-            if (!mounted) return;
-        });
+        getMyPromotions()
+          .then((list) => { if (mounted) { setPromos(list); setPromosError(null); } })
+          .catch((e: unknown) => { if (mounted) setPromosError(e instanceof Error ? e.message : 'Błąd pobierania promocji'); });
         return () => { mounted = false };
     }, []);
 
@@ -131,36 +115,6 @@ const Profile = () => {
             });
         } finally {
             setWithdrawing(false);
-        }
-    };
-
-    const handleRedeemPromotion = async () => {
-        if (!promoCode.trim()) {
-            setRedeemError('Wpisz kod promocyjny');
-            return;
-        }
-        setRedeeming(true);
-        setRedeemError(null);
-        try {
-            await redeemPromotion(promoCode.trim());
-            toast({
-                variant: "success",
-                title: "Kod wykorzystany!",
-                description: "Promocja została dodana do Twojego konta.",
-            });
-            setPromoCode('');
-            // Refresh promotions list
-            loadPromotions();
-        } catch (e: any) {
-            const errorMessage = e?.message || 'Nie udało się wykorzystać kodu promocyjnego';
-            setRedeemError(errorMessage);
-            toast({
-                variant: "destructive",
-                title: "Błąd wykorzystania kodu",
-                description: errorMessage,
-            });
-        } finally {
-            setRedeeming(false);
         }
     };
 
@@ -270,46 +224,6 @@ const Profile = () => {
                     </CardContent>
                 </Card>
             </div>
-
-            <Card className="mb-6">
-                <CardHeader>
-                    <CardTitle>Wykorzystaj kod promocyjny</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                        <div>
-                            <Label htmlFor="promoCode" className="text-sm font-semibold">Kod promocyjny</Label>
-                            <div className="flex gap-2 mt-2">
-                                <Input
-                                    id="promoCode"
-                                    type="text"
-                                    value={promoCode}
-                                    onChange={(e) => {
-                                        setPromoCode(e.target.value.toUpperCase());
-                                        setRedeemError(null);
-                                    }}
-                                    placeholder="Wpisz kod (np. PROMO2024)"
-                                    className="flex-1"
-                                    disabled={redeeming}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && !redeeming && promoCode.trim()) {
-                                            handleRedeemPromotion();
-                                        }
-                                    }}
-                                />
-                                <Button 
-                                    onClick={handleRedeemPromotion} 
-                                    disabled={redeeming || !promoCode.trim()}
-                                    className="bg-cyan-800 hover:bg-cyan-700 text-white"
-                                >
-                                    {redeeming ? 'Wysyłanie...' : 'Wykorzystaj'}
-                                </Button>
-                            </div>
-                            {redeemError && <div className="text-red-600 text-sm mt-1">{redeemError}</div>}
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
 
             <Card>
                 <CardHeader>

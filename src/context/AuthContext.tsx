@@ -22,7 +22,7 @@ interface AuthState {
 interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
-  login: (payload: LoginRequest) => Promise<void>;
+  login: (payload: LoginRequest) => Promise<AuthUser>;
   register: (payload: RegisterRequest) => Promise<void>;
   logout: () => void;
   getRedirectPath: () => string;
@@ -87,10 +87,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   }, [parseRoleFromToken]);
 
-  const login = useCallback(async (payload: LoginRequest) => {
+  const login = useCallback(async (payload: LoginRequest): Promise<AuthUser> => {
     const res = await apiLogin(payload);
     persistAll(res);
-  }, [persistAll]);
+    
+    // Parse role from JWT token if not provided in response
+    const roleId = res.roleId ?? res.role ?? parseRoleFromToken(res.accessToken);
+    
+    const user: AuthUser = {
+      userId: res.userId,
+      name: res.name,
+      lastName: res.lastName,
+      email: res.email,
+      accountBalance: res.accountBalance,
+      roleId,
+    };
+    
+    return user;
+  }, [persistAll, parseRoleFromToken]);
 
   const register = useCallback(async (payload: RegisterRequest) => {
     const res = await apiRegister(payload);

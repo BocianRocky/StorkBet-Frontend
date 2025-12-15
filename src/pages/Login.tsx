@@ -15,8 +15,9 @@ const Login: React.FC = () => {
     setError(null);
     setLoading(true);
     try {
-      await login({ email, password });
-      const redirectPath = getRedirectPath();
+      const user = await login({ email, password });
+      // Przekieruj administratora do panelu, gracza na stronę główną
+      const redirectPath = user.roleId === 1 ? '/admin/dashboard' : '/';
       navigate(redirectPath);
     } catch (err: any) {
       setError(err?.message || 'Błąd logowania');
