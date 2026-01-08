@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiService, type AdminWinLossRatio, type AdminBookmakerProfit, type AdminSportCouponsItem, type AdminSportEffectivenessItem, type AdminMonthlyCouponsItem, type AdminPlayerProfitItem, type UncompletedEvent, type UpdateEventResultRequest, type PlayerDetails, type SportSimpleDto } from '../services/api';
 import { getAllPromotions, updatePromotion, deletePromotion, type PromotionAvailable, type UpdatePromotionRequest } from '../services/promotions';
@@ -21,6 +22,7 @@ import {
 } from 'recharts';
 
 const AdminDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [stats, setStats] = React.useState<AdminWinLossRatio | null>(null);
   const [loading, setLoading] = React.useState<boolean>(false);
@@ -532,7 +534,7 @@ const AdminDashboard: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-4xl font-semibold">Panel administracyjny</h1>
         <button
-          onClick={logout}
+          onClick={() => { logout(); }}
           className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors"
         >
           Wyloguj

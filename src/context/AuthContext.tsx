@@ -118,6 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearPersistedAuth();
     localStorage.removeItem('auth_user');
     setState({ user: null, accessToken: null, refreshToken: null, refreshTokenExp: null });
+    window.location.href = '/';
   }, []);
 
   const getRedirectPath = useCallback(() => {
