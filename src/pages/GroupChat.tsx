@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { apiService, type GroupMessage, type TyperGroup } from '../services/api';
+import { apiService, type GroupMessage, type TyperGroup, type SearchPlayerResult } from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -18,10 +18,14 @@ const GroupChat: React.FC = () => {
   const [messageText, setMessageText] = useState<string>('');
   const [sending, setSending] = useState<boolean>(false);
   const [addingMember, setAddingMember] = useState<boolean>(false);
-  const [memberPlayerId, setMemberPlayerId] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<SearchPlayerResult[]>([]);
+  const [searching, setSearching] = useState<boolean>(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<SearchPlayerResult | null>(null);
   const [showAddMember, setShowAddMember] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const loadMessages = async () => {
     if (!groupId) return;
@@ -46,21 +50,59 @@ const GroupChat: React.FC = () => {
     }
   };
 
-  const handleAddMember = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!groupId || !memberPlayerId.trim() || addingMember) return;
-
-    const playerId = Number(memberPlayerId.trim());
-    if (isNaN(playerId) || playerId <= 0) {
-      setError('Podaj prawidłowe ID gracza');
+  const handleSearchPlayers = useCallback(async (query: string) => {
+    if (!query.trim() || query.length < 2) {
+      setSearchResults([]);
       return;
     }
+
+    setSearching(true);
+    try {
+      const results = await apiService.searchPlayers(query);
+      // Filtruj graczy, którzy już są w grupie
+      const existingPlayerIds = groupInfo?.members.map(m => m.playerId) || [];
+      const filteredResults = results.filter(p => !existingPlayerIds.includes(p.playerId));
+      setSearchResults(filteredResults);
+    } catch (e: unknown) {
+      console.error('Błąd podczas wyszukiwania graczy:', e);
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  }, [groupInfo]);
+
+  useEffect(() => {
+    // Debounce wyszukiwania
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (searchQuery.trim().length >= 2) {
+      searchTimeoutRef.current = setTimeout(() => {
+        handleSearchPlayers(searchQuery);
+      }, 300);
+    } else {
+      setSearchResults([]);
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery, handleSearchPlayers]);
+
+  const handleAddMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!groupId || !selectedPlayer || addingMember) return;
 
     setAddingMember(true);
     setError(null);
     try {
-      await apiService.addMemberToGroup(Number(groupId), { playerId });
-      setMemberPlayerId('');
+      await apiService.addMemberToGroup(Number(groupId), { playerId: selectedPlayer.playerId });
+      setSearchQuery('');
+      setSearchResults([]);
+      setSelectedPlayer(null);
       setShowAddMember(false);
       // Odśwież informacje o grupie
       await reloadGroupInfo();
@@ -69,6 +111,12 @@ const GroupChat: React.FC = () => {
     } finally {
       setAddingMember(false);
     }
+  };
+
+  const handleSelectPlayer = (player: SearchPlayerResult) => {
+    setSelectedPlayer(player);
+    setSearchQuery(`${player.name} ${player.lastName}`);
+    setSearchResults([]);
   };
 
   useEffect(() => {
@@ -194,21 +242,62 @@ const GroupChat: React.FC = () => {
           </div>
           {showAddMember && (
             <form onSubmit={handleAddMember} className="mt-4 p-4 border rounded-lg bg-muted/30">
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  placeholder="ID gracza"
-                  value={memberPlayerId}
-                  onChange={(e) => setMemberPlayerId(e.target.value)}
-                  disabled={addingMember}
-                  className="flex-1"
-                  min="1"
-                />
+              <div className="space-y-2">
+                <div className="relative">
+                  <Input
+                    type="text"
+                    placeholder="Wyszukaj gracza po imieniu lub nazwisku..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setSelectedPlayer(null);
+                    }}
+                    disabled={addingMember}
+                    className="w-full"
+                  />
+                  {searching && (
+                    <div className="absolute right-2 top-2 text-sm text-muted-foreground">
+                      Szukam...
+                    </div>
+                  )}
+                  {searchResults.length > 0 && !selectedPlayer && (
+                    <div className="absolute z-10 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {searchResults.map((player) => (
+                        <div
+                          key={player.playerId}
+                          onClick={() => handleSelectPlayer(player)}
+                          className="p-2 hover:bg-muted cursor-pointer border-b last:border-b-0"
+                        >
+                          <div className="font-medium">{player.name} {player.lastName}</div>
+                          <div className="text-xs text-muted-foreground">ID: {player.playerId}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {selectedPlayer && (
+                  <div className="p-2 bg-primary/10 border border-primary/20 rounded-md">
+                    <div className="text-sm font-medium">
+                      Wybrany gracz: {selectedPlayer.name} {selectedPlayer.lastName}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedPlayer(null);
+                        setSearchQuery('');
+                      }}
+                      className="text-xs text-muted-foreground hover:text-foreground mt-1"
+                    >
+                      Zmień wybór
+                    </button>
+                  </div>
+                )}
                 <Button
                   type="submit"
-                  disabled={addingMember || !memberPlayerId.trim()}
+                  disabled={addingMember || !selectedPlayer}
+                  className="w-full"
                 >
-                  {addingMember ? 'Dodawanie...' : 'Dodaj'}
+                  {addingMember ? 'Dodawanie...' : 'Dodaj gracza'}
                 </Button>
               </div>
             </form>

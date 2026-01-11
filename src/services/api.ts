@@ -194,6 +194,12 @@ export interface AddMemberRequest {
   playerId: number;
 }
 
+export interface SearchPlayerResult {
+  playerId: number;
+  name: string;
+  lastName: string;
+}
+
 class ApiService {
   private baseUrl = '/api';
 
@@ -726,6 +732,27 @@ class ApiService {
       }
     } catch (error) {
       console.error('Błąd podczas dodawania członka do grupy:', error);
+      throw error;
+    }
+  }
+
+  async searchPlayers(query: string): Promise<SearchPlayerResult[]> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/groups/search-players?query=${encodeURIComponent(query)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return Array.isArray(data) ? (data as SearchPlayerResult[]) : [];
+    } catch (error) {
+      console.error('Błąd podczas wyszukiwania graczy:', error);
       throw error;
     }
   }
